@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.database import init_db
-from app.routers import scan
+from app.routers import scan, auth
 
 # Load environment variables
 load_dotenv()
@@ -69,6 +69,7 @@ app.add_middleware(
 )
 
 # Register routers
+app.include_router(auth.router)
 app.include_router(scan.router)
 
 

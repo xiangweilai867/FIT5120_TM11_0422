@@ -11,6 +11,7 @@ from app.database import get_db
 from app.schemas.scan import ScanResponse, ErrorResponse
 from app.services.gemini import gemini_service
 from app.services.cache import hash_image, get_cached_result, cache_result
+from app.auth import get_current_user
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -37,10 +38,13 @@ ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 )
 async def scan_food(
     file: UploadFile = File(..., description="Image file (JPEG or PNG, max 5MB)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Scan a food image and return nutritional information.
+    
+    Requires authentication via bearer token.
     
     This endpoint:
     1. Validates the uploaded image
@@ -52,12 +56,13 @@ async def scan_food(
     Args:
         file: Uploaded image file
         db: Database session
+        current_user: Authenticated user from bearer token
         
     Returns:
         ScanResponse containing food analysis
         
     Raises:
-        HTTPException: If file validation fails or processing errors occur
+        HTTPException: If file validation fails, authentication fails, or processing errors occur
     """
     
     # Validate file type

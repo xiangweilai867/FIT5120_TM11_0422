@@ -2,8 +2,10 @@
  * API Service
  * 
  * Handles communication with the NutriHealth backend server.
- * Includes image upload, error handling, and timeout management.
+ * Includes image upload, authentication, error handling, and timeout management.
  */
+
+import { getToken, clearToken } from './auth';
 
 // Backend URL configuration
 // For local development: use your local IP address
@@ -59,6 +61,9 @@ export class ApiError extends Error {
  */
 export async function scanFood(imageUri: string): Promise<ScanResponse> {
   try {
+    // Get valid authentication token
+    const token = await getToken();
+    
     // Create form data
     const formData = new FormData();
     
@@ -85,13 +90,42 @@ export async function scanFood(imageUri: string): Promise<ScanResponse> {
         body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
         },
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      // Handle non-OK responses
+      // Handle 401 - token expired or invalid
+      if (response.status === 401) {
+        console.log('Token expired, refreshing...');
+        // Clear cached token and retry once
+        await clearToken();
+        const newToken = await getToken();
+        
+        const retryResponse = await fetch(`${BACKEND_URL}/scan`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${newToken}`,
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          const errorData = await retryResponse.json().catch(() => ({}));
+          throw new ApiError(
+            errorData.detail || 'Authentication failed',
+            retryResponse.status,
+            errorData
+          );
+        }
+        
+        return await retryResponse.json();
+      }
+
+      // Handle other non-OK responses
       console.log('Response:', JSON.stringify(response));
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

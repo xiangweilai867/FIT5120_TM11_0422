@@ -17,6 +17,10 @@ google-genai==1.68.0
 # Environment variables
 python-dotenv==1.0.1
 
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
 # Utilities
 pydantic==2.10.1
 pydantic-settings==2.6.1
