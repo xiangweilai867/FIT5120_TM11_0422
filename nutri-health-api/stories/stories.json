@@ -1,0 +1,16 @@
+{
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "The Healthy Garden",
+      "coverImage": "story-1/cover.jpg",
+      "pageCount": 3
+    },
+    {
+      "id": "story-2",
+      "title": "Rainbow Vegetables",
+      "coverImage": "story-2/cover.jpg",
+      "pageCount": 3
+    }
+  ]
+}

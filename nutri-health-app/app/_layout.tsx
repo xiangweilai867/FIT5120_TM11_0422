@@ -79,6 +79,20 @@ export default function RootLayout() {
             title: 'Results',
           }}
         />
+        <Drawer.Screen
+          name="stories/index"
+          options={{
+            drawerLabel: 'Stories',
+            title: 'Stories',
+          }}
+        />
+        <Drawer.Screen
+          name="stories/[id]"
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'Story',
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );
