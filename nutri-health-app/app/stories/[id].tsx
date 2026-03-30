@@ -1,6 +1,6 @@
 /**
  * Story Viewer Screen
- * Displays story pages with images and audio playback
+ * Displays story pages with text and images, continuous scrolling with audio playback
  */
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Radius } from '../../constants/Radius';
@@ -25,11 +26,27 @@ import {
   getStoryPageImageUrl,
   getStoryPageAudioUrl,
   getAuthHeaders,
+  getStoryText,
   Story,
+  StoryTextData,
   ApiError,
 } from '../../services/stories';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HEADER_HEIGHT = 80;
+const PAGE_HEIGHT = SCREEN_HEIGHT - HEADER_HEIGHT;
+
+// Story text styling - future-proof for per-story customization
+const getStoryTextStyle = (storyId: string) => {
+  // Future: return story-specific styles based on storyId
+  return {
+    fontSize: 20,
+    lineHeight: 32,
+    letterSpacing: 0.5,
+    color: Colors.on_surface,
+    textAlign: 'left' as const,
+  };
+};
 
 export default function StoryViewerScreen() {
   const params = useLocalSearchParams();
@@ -37,6 +54,7 @@ export default function StoryViewerScreen() {
   const storyId = params.id as string;
 
   const [story, setStory] = useState<Story | null>(null);
+  const [storyText, setStoryText] = useState<StoryTextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,24 +63,17 @@ export default function StoryViewerScreen() {
 
   const soundRef = useRef<Audio.Sound | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const isAutoScrolling = useRef(false);
 
   useEffect(() => {
-    loadStory();
+    loadStoryData();
     loadAuthHeaders();
     setupAudio();
 
     return () => {
-      // Cleanup audio on unmount
       cleanupAudio();
     };
   }, []);
-
-  useEffect(() => {
-    // Stop audio when navigating away
-    return () => {
-      cleanupAudio();
-    };
-  }, [router]);
 
   const setupAudio = async () => {
     try {
@@ -98,17 +109,24 @@ export default function StoryViewerScreen() {
     }
   };
 
-  const loadStory = async () => {
+  const loadStoryData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const stories = await getStories();
+      
+      // Load both story metadata and text content
+      const [stories, textData] = await Promise.all([
+        getStories(),
+        getStoryText(storyId),
+      ]);
+      
       const foundStory = stories.find(s => s.id === storyId);
       
       if (!foundStory) {
         setError('Story not found');
       } else {
         setStory(foundStory);
+        setStoryText(textData);
       }
     } catch (err) {
       console.error('Failed to load story:', err);
@@ -122,7 +140,19 @@ export default function StoryViewerScreen() {
     }
   };
 
-  const playAudio = async (pageNumber: number) => {
+  const handleScroll = (event: any) => {
+    if (isAutoScrolling.current) return;
+    
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const pageIndex = Math.floor(scrollY / PAGE_HEIGHT);
+    const newPage = pageIndex + 1;
+    
+    if (newPage !== currentPage && story && newPage >= 1 && newPage <= story.pageCount) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const playAudioForPage = async (pageNumber: number) => {
     try {
       // Stop any currently playing audio
       await cleanupAudio();
@@ -140,7 +170,6 @@ export default function StoryViewerScreen() {
 
       soundRef.current = sound;
       setIsPlaying(true);
-      setCurrentPage(pageNumber);
 
       // Set up callback for when audio finishes
       sound.setOnPlaybackStatusUpdate((status) => {
@@ -161,21 +190,38 @@ export default function StoryViewerScreen() {
     if (story && pageNumber < story.pageCount) {
       const nextPage = pageNumber + 1;
       
-      // Scroll to next page
+      // Set flag to prevent scroll handler from interfering
+      isAutoScrolling.current = true;
+      
+      // Auto-scroll to next page
       scrollViewRef.current?.scrollTo({
-        y: (nextPage - 1) * SCREEN_HEIGHT,
+        y: (nextPage - 1) * PAGE_HEIGHT,
         animated: true,
       });
       
-      // Start playing audio for next page after a short delay
+      // Update current page
+      setCurrentPage(nextPage);
+      
+      // Wait for scroll animation to complete, then play next page
       setTimeout(() => {
-        playAudio(nextPage);
-      }, 500);
+        isAutoScrolling.current = false;
+        playAudioForPage(nextPage);
+      }, 600);
+    }
+    // If last page, just stay idle
+  };
+
+  const handleListenPress = async () => {
+    if (isPlaying) {
+      await cleanupAudio();
+    } else {
+      await playAudioForPage(currentPage);
     }
   };
 
-  const stopAudio = async () => {
+  const handleBackPress = async () => {
     await cleanupAudio();
+    router.push('/stories/index' as any);
   };
 
   if (loading) {
@@ -187,63 +233,71 @@ export default function StoryViewerScreen() {
     );
   }
 
-  if (error || !story) {
+  if (error || !story || !storyText) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error || 'Story not found'}</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>Back to Stories</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  const textStyle = getStoryTextStyle(storyId);
+
   return (
     <View style={styles.container}>
+      {/* Fixed Listen Button Header */}
+      <View style={styles.fixedHeader}>
+        <TouchableOpacity
+          style={styles.listenButton}
+          onPress={handleListenPress}
+          activeOpacity={0.8}
+        >
+          <Ionicons 
+            name={isPlaying ? "stop-circle" : "volume-high"} 
+            size={24} 
+            color={Colors.on_primary} 
+          />
+          <Text style={styles.listenButtonText}>
+            {isPlaying ? 'Stop' : 'Listen'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Continuous Scroll Story Content */}
       <ScrollView
         ref={scrollViewRef}
-        pagingEnabled
         showsVerticalScrollIndicator={false}
-        onMomentumScrollEnd={(event) => {
-          const pageNumber = Math.round(event.nativeEvent.contentOffset.y / SCREEN_HEIGHT) + 1;
-          setCurrentPage(pageNumber);
-        }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
-        {Array.from({ length: story.pageCount }, (_, index) => {
+        {storyText.pages.map((page, index) => {
           const pageNumber = index + 1;
           const imageUrl = getStoryPageImageUrl(storyId, pageNumber);
 
           return (
             <View key={pageNumber} style={styles.page}>
-              <Image
-                source={{
-                  uri: imageUrl,
-                  headers: authHeaders || undefined,
-                }}
-                style={styles.pageImage}
-                resizeMode="contain"
-              />
-              
-              <View style={styles.pageControls}>
-                <Text style={styles.pageIndicator}>
-                  Page {pageNumber} of {story.pageCount}
+              {/* Text Section - Top Half */}
+              <View style={styles.textSection}>
+                <Text style={[styles.storyText, textStyle]}>
+                  {page.storyText}
                 </Text>
-                
-                {isPlaying && currentPage === pageNumber ? (
-                  <TouchableOpacity
-                    style={styles.audioButton}
-                    onPress={stopAudio}
-                  >
-                    <Text style={styles.audioButtonText}>Stop</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.audioButton}
-                    onPress={() => playAudio(pageNumber)}
-                  >
-                    <Text style={styles.audioButtonText}>Listen</Text>
-                  </TouchableOpacity>
-                )}
+              </View>
+
+              {/* Image Section - Bottom Half */}
+              <View style={styles.imageSection}>
+                <Image
+                  source={{
+                    uri: imageUrl,
+                    headers: authHeaders || undefined,
+                  }}
+                  style={styles.pageImage}
+                  resizeMode="contain"
+                />
               </View>
             </View>
           );
@@ -265,39 +319,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     padding: Spacing.xl,
   },
-  page: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-  },
-  pageImage: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.8,
-  },
-  pageControls: {
+  fixedHeader: {
     position: 'absolute',
-    bottom: Spacing.xl,
+    top: 0,
     left: 0,
     right: 0,
+    height: HEADER_HEIGHT,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 1000,
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
   },
-  pageIndicator: {
-    ...Typography.bodyMedium,
-    color: Colors.on_surface_variant,
-    marginBottom: Spacing.md,
-  },
-  audioButton: {
-    backgroundColor: Colors.primary_container,
-    paddingHorizontal: Spacing.xl * 2,
+  listenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.xl * 1.5,
     paddingVertical: Spacing.md,
     borderRadius: Radius.full,
-    minWidth: 120,
-    alignItems: 'center',
-    // Add gradient effect (can be enhanced with linear-gradient library)
-    shadowColor: Colors.primary,
+    shadowColor: Colors.on_surface,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -306,10 +347,43 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  audioButtonText: {
+  listenButtonText: {
     ...Typography.labelLarge,
-    color: Colors.on_primary_container,
+    color: Colors.on_primary,
     fontWeight: '600',
+    marginLeft: Spacing.sm,
+    fontSize: 18,
+  },
+  scrollView: {
+    flex: 1,
+    marginTop: HEADER_HEIGHT,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
+  page: {
+    height: PAGE_HEIGHT,
+    width: SCREEN_WIDTH,
+  },
+  textSection: {
+    height: PAGE_HEIGHT * 0.5,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xl,
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+  },
+  storyText: {
+    ...Typography.bodyLarge,
+  },
+  imageSection: {
+    height: PAGE_HEIGHT * 0.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+  },
+  pageImage: {
+    width: SCREEN_WIDTH * 0.9,
+    height: PAGE_HEIGHT * 0.45,
   },
   loadingText: {
     ...Typography.bodyLarge,

@@ -21,9 +21,9 @@ import { Radius } from '../../constants/Radius';
 import { Spacing } from '../../constants/Spacing';
 import { getStories, getStoryCoverUrl, getAuthHeaders, Story, ApiError } from '../../services/stories';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.7;
-const CARD_HEIGHT = CARD_WIDTH * 1.25; // 4:5 aspect ratio
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.75; // 75% of screen height
+const CARD_WIDTH = CARD_HEIGHT * 0.7; // Maintain good proportions
 
 export default function StoriesListScreen() {
   const router = useRouter();
@@ -84,10 +84,9 @@ export default function StoriesListScreen() {
               headers: authHeaders || undefined,
             }}
             style={styles.coverImage}
-            resizeMode="cover"
           />
           <View style={styles.titleContainer}>
-            <Text style={styles.title} numberOfLines={2}>
+            <Text style={styles.title} numberOfLines={3} ellipsizeMode="tail">
               {item.title}
             </Text>
             <Text style={styles.pageCount}>
@@ -200,11 +199,12 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: '100%',
-    height: '75%',
+    height: '88%',
     backgroundColor: Colors.surface_container,
+    resizeMode: 'cover',
   },
   titleContainer: {
-    flex: 1,
+    height: '12%',
     padding: Spacing.lg,
     justifyContent: 'center',
     backgroundColor: Colors.surface_container_lowest,
@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
     ...Typography.headlineMedium,
     color: Colors.on_surface,
     marginBottom: Spacing.xs,
+    flexWrap: 'wrap',
   },
   pageCount: {
     ...Typography.bodyMedium,

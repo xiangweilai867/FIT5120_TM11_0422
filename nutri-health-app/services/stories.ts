@@ -25,6 +25,21 @@ export interface Story {
 }
 
 /**
+ * Story page interface - represents a single page's text content
+ */
+export interface StoryPage {
+  storyText: string;
+  imagePrompt: string;
+}
+
+/**
+ * Story text data interface - contains all pages' text content
+ */
+export interface StoryTextData {
+  pages: StoryPage[];
+}
+
+/**
  * Stories response from the API
  */
 export interface StoriesResponse {
@@ -186,4 +201,63 @@ export async function getAuthHeaders(): Promise<{ Authorization: string }> {
   return {
     Authorization: `Bearer ${token}`,
   };
+}
+
+/**
+ * Fetch text content for a story
+ * 
+ * @param storyId The story ID
+ * @returns Story text data with all pages
+ * @throws ApiError if the request fails
+ */
+export async function getStoryText(storyId: string): Promise<StoryTextData> {
+  try {
+    const headers = await getAuthHeaders();
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/stories/${storyId}/text`,
+        {
+          method: 'GET',
+          headers,
+          signal: controller.signal,
+        }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new ApiError(
+          'Failed to fetch story text',
+          response.status
+        );
+      }
+      
+      const data: StoryTextData = await response.json();
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new ApiError('Request timed out. Please try again!', 408);
+    }
+    
+    if (error.message === 'Network request failed') {
+      throw new ApiError(
+        'Network error. Please check your internet connection!',
+        0
+      );
+    }
+    
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    throw new ApiError('Failed to load story text', 500, error);
+  }
 }
