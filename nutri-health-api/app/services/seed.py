@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -67,8 +68,21 @@ def _chunk_rows(rows: list[dict[str, Any]], chunk_size: int = 2000):
         yield rows[i : i + chunk_size]
 
 
+_SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _validate_identifiers(table_name: str, columns: list[str]) -> None:
+    """Raise ValueError if table or column names contain unsafe characters."""
+    if table_name not in TABLE_INSERT_ORDER:
+        raise ValueError(f"Unknown seed table: {table_name!r}")
+    for col in columns:
+        if not _SAFE_IDENTIFIER_RE.match(col):
+            raise ValueError(f"Unsafe column identifier {col!r} in table {table_name!r}")
+
+
 def _ensure_init_state_table(db: Session) -> None:
     db.execute(text(INIT_STATE_TABLE_SQL))
+    db.commit()
 
 
 def has_seed_been_initialized(db: Session, seed_key: str) -> bool:
@@ -117,6 +131,7 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
                 continue
 
             columns = list(rows[0].keys())
+            _validate_identifiers(table, columns)
             columns_sql = ", ".join(columns)
             values_sql = ", ".join(f":{col}" for col in columns)
             insert_sql = text(f"INSERT INTO {table} ({columns_sql}) VALUES ({values_sql})")

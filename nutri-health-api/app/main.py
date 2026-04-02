@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
         init_db()
         logger.info("Database initialized successfully")
 
-        if os.getenv("SEED_ON_STARTUP", "true").lower() == "true":
+        if os.getenv("SEED_ON_STARTUP", "false").lower() == "true":
             db = SessionLocal()
             try:
                 seed_key = os.getenv("SEED_KEY", "cn2026_v1")
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
 
                 already_initialized = has_seed_been_initialized(db, seed_key)
                 if force_reload or not already_initialized:
-                    truncate_before_load = os.getenv("SEED_TRUNCATE_BEFORE_LOAD", "true").lower() == "true"
+                    truncate_before_load = os.getenv("SEED_TRUNCATE_BEFORE_LOAD", "false").lower() == "true"
                     counts = seed_catalog_tables(db, truncate_before_load=truncate_before_load)
                     mark_seed_initialized(db, seed_key, init_value="completed")
                     logger.info("Catalog seed completed on startup: %s", counts)

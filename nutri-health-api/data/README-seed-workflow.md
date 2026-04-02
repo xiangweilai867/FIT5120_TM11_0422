@@ -46,7 +46,7 @@ docker compose exec -T db psql -U nutrihealth -d nutrihealth -f - < app/etl/sql/
 
 4. Generate anomaly report files for PR
 ```bash
-export DATABASE_URL='postgresql+psycopg2://nutrihealth:nutrihealth_dev_password@localhost:5432/nutrihealth'
+export DATABASE_URL='postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME'
 python -m app.etl.generate_anomaly_report
 ```
 

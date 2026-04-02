@@ -171,10 +171,10 @@ def _build_food_tags(food_rows: list[dict[str, Any]], nutrients_by_food: dict[in
     allergen_patterns = {
         "Peanut": r"\bpeanut\b",
         "TreeNut": r"\b(almond|cashew|walnut|pistachio|hazelnut)\b",
-        "Milk": r"\bmilk|cheese|whey|casein\b",
+        "Milk": r"\b(milk|cheese|whey|casein)\b",
         "Egg": r"\begg\b",
         "Gluten": r"\b(wheat|barley|rye|gluten)\b",
-        "Shellfish": r"\bshrimp|prawn|crab|lobster\b",
+        "Shellfish": r"\b(shrimp|prawn|crab|lobster)\b",
     }
 
     for food in food_rows:
@@ -338,19 +338,27 @@ def build_payloads(write_staging: bool = True) -> dict[str, int]:
             }
         )
 
-    cn_wght = [
-        {
-            "cn_code": _parse_int(row.get("Cn code")),
-            "sequence_num": _parse_int(row.get("Sequence num")) or 0,
-            "measure_description": (row.get("Measure description") or "").strip() or None,
-            "amount": _parse_float(row.get("Amount")),
-            "unit_amount": _parse_float(row.get("Unit amount")),
-            "type_of_unit": ((row.get("Type of unit") or "").strip().lower() or None),
-            "source_code": _parse_int(row.get("Source code")),
-        }
-        for row in wght_raw
-        if _parse_int(row.get("Cn code")) is not None
-    ]
+    cn_wght: list[dict[str, Any]] = []
+    for row in wght_raw:
+        cn_code = _parse_int(row.get("Cn code"))
+        if cn_code is None:
+            continue
+
+        sequence_num = _parse_int(row.get("Sequence num"))
+        if sequence_num is None:
+            continue
+
+        cn_wght.append(
+            {
+                "cn_code": cn_code,
+                "sequence_num": sequence_num,
+                "measure_description": (row.get("Measure description") or "").strip() or None,
+                "amount": _parse_float(row.get("Amount")),
+                "unit_amount": _parse_float(row.get("Unit amount")),
+                "type_of_unit": ((row.get("Type of unit") or "").strip().lower() or None),
+                "source_code": _parse_int(row.get("Source code")),
+            }
+        )
 
     cn_food_tags = _build_food_tags(cn_fdes, nutrients_by_food, rules)
     remote_alternative = _build_alternatives(cn_fdes)
