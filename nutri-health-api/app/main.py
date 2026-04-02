@@ -11,7 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.database import init_db
+from app.database import SessionLocal
 from app.routers import scan, auth, stories
+from app.services.seed import seed_catalog_tables
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +39,15 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         logger.info("Database initialized successfully")
+
+        if os.getenv("SEED_ON_STARTUP", "false").lower() == "true":
+            db = SessionLocal()
+            try:
+                truncate_before_load = os.getenv("SEED_TRUNCATE_BEFORE_LOAD", "true").lower() == "true"
+                counts = seed_catalog_tables(db, truncate_before_load=truncate_before_load)
+                logger.info("Catalog seed completed on startup: %s", counts)
+            finally:
+                db.close()
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise

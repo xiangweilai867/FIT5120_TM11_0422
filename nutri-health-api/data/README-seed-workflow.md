@@ -25,6 +25,42 @@ Put files in the following folders.
   - app/etl/transform_raw_to_staging.py
   - app/etl/build_seed_payload.py
 
+## Commands
+Run from nutri-health-api/:
+
+1. Build seed payloads from raw files
+```bash
+python -m app.etl.build_seed_payload
+```
+
+2. Load generated seed files into PostgreSQL
+```bash
+export DATABASE_URL='postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME'
+python -m app.etl.seed_db
+```
+
+3. Run SQL verification check
+```bash
+docker compose exec -T db psql -U nutrihealth -d nutrihealth -f - < app/etl/sql/check_seed_counts.sql
+```
+
+4. Generate anomaly report files for PR
+```bash
+export DATABASE_URL='postgresql+psycopg2://nutrihealth:nutrihealth_dev_password@localhost:5432/nutrihealth'
+python -m app.etl.generate_anomaly_report
+```
+
+Outputs:
+- `data/staging/anomaly_report.json`
+- `data/staging/anomaly_report.md`
+
+3. Optional startup seed
+Set environment variables:
+- `SEED_ON_STARTUP=true`
+- `SEED_TRUNCATE_BEFORE_LOAD=true`
+
+Then start API as usual.
+
 ## Suggested next input from you
 1. Database design (tables, columns, types, constraints, unique keys, foreign keys).
 2. One or more sample raw JSON files in data/raw/.
