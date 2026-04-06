@@ -9,13 +9,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
-const BACKEND_URL = __DEV__ 
-  ? 'http://192.168.18.6:8000'
-  : 'https://fit5120-tm11.onrender.com';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 // Hardcoded credentials (for demo only)
-const DEMO_USERNAME = 'demo';
-const DEMO_PASSWORD = 'demo123';
+// const DEMO_USERNAME = 'demo';
+const DEMO_USERNAME = process.env.EXPO_PUBLIC_USERNAME || '';
+// const DEMO_PASSWORD = 'demo123';
+const DEMO_PASSWORD = process.env.EXPO_PUBLIC_PASSWORD || '';
 
 interface TokenResponse {
   access_token: string;
