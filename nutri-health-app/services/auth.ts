@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 const BACKEND_URL = __DEV__ 
-  ? 'http://192.168.50.152:8000'
+  ? 'http://192.168.18.6:8000'
   : 'https://your-app.onrender.com';
 
 // Hardcoded credentials (for demo only)

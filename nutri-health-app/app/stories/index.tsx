@@ -22,8 +22,8 @@ import { Spacing } from '../../constants/Spacing';
 import { getStories, getStoryCoverUrl, getAuthHeaders, Story, ApiError } from '../../services/stories';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.75; // 75% of screen height
-const CARD_WIDTH = CARD_HEIGHT * 0.7; // Maintain good proportions
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.6; // 60% of screen height
+const CARD_WIDTH = SCREEN_WIDTH * 0.9; // Maintain good proportions
 
 export default function StoriesListScreen() {
   const router = useRouter();
@@ -86,14 +86,9 @@ export default function StoriesListScreen() {
             }}
             style={styles.coverImage}
           />
-          <View style={styles.titleContainer}>
-            <Text style={styles.title} numberOfLines={3} ellipsizeMode="tail">
-              {item.title}
-            </Text>
-            <Text style={styles.pageCount}>
-              {item.pageCount} {item.pageCount === 1 ? 'page' : 'pages'}
-            </Text>
-          </View>
+          <Text style={styles.title} numberOfLines={3} ellipsizeMode="tail">
+            {item.title}
+          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -175,18 +170,18 @@ const styles = StyleSheet.create({
     color: Colors.on_surface_variant,
   },
   listContent: {
-    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
+    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH - Spacing.xs * 2) / 2, // Align the current story in the center
     paddingVertical: Spacing.md,
   },
   card: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginHorizontal: Spacing.md,
+    marginHorizontal: Spacing.xs,
   },
   cardInner: {
     flex: 1,
     backgroundColor: Colors.surface_container_lowest,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
     // Elevation for shadow effect
     shadowColor: Colors.on_surface,
@@ -212,6 +207,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.headlineMedium,
+    padding: Spacing.sm,
     color: Colors.on_surface,
     marginBottom: Spacing.xs,
     flexWrap: 'wrap',

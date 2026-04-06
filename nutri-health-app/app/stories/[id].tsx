@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     zIndex: 1000,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     paddingHorizontal: Spacing.xl,
   },
   listenButton: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
   },
   textSection: {
-    height: PAGE_HEIGHT * 0.5,
+    // height: PAGE_HEIGHT * 0.5,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.xl,
     justifyContent: 'center',
@@ -377,14 +377,14 @@ const styles = StyleSheet.create({
     ...Typography.bodyLarge,
   },
   imageSection: {
-    height: PAGE_HEIGHT * 0.5,
+    width: SCREEN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.surface,
   },
   pageImage: {
-    width: SCREEN_WIDTH * 0.9,
-    height: PAGE_HEIGHT * 0.45,
+    width: Math.min(SCREEN_WIDTH, PAGE_HEIGHT),
+    height: Math.min(SCREEN_WIDTH, PAGE_HEIGHT)
   },
   loadingText: {
     ...Typography.bodyLarge,
