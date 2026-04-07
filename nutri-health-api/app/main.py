@@ -42,7 +42,8 @@ async def lifespan(app: FastAPI):
     # Initialize database
     try:
         init_db()
-        logger.info("Database initialized successfully")
+        seed = os.getenv("SEED_ON_STARTUP", "false").lower()
+        logger.info(f"Database initialized successfully. SEED_ON_STARTUP: {seed}")
 
         if os.getenv("SEED_ON_STARTUP", "false").lower() == "true":
             db = SessionLocal()
