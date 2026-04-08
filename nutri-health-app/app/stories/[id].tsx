@@ -194,6 +194,17 @@ export default function StoryViewerScreen() {
         },
         { shouldPlay: true }
       );
+      if (story?.pageCount && pageNumber + 1 <= story.pageCount) {
+        // Making this request will cause it to exist in the cache.
+        // This will make the playing of the next audio file smoother.
+        await Audio.Sound.createAsync(
+          {
+            uri: getStoryPageAudioUrl(storyId, pageNumber + 1),
+            headers: authHeaders || undefined,
+          },
+          { shouldPlay: false }
+        ).catch((e) => undefined);
+      }
 
       soundRef.current = sound;
       setIsPlaying(true);
@@ -307,7 +318,7 @@ export default function StoryViewerScreen() {
           const imageUrl = getStoryPageImageUrl(storyId, pageNumber);
 
           return (
-            <View key={pageNumber} style={styles.page}>
+            <View key={pageNumber} style={index + 1 !== story.pageCount ? styles.page : [styles.page, {height: 'auto'}]}>
               {/* Text Section - Top Half */}
               <View style={styles.textSection}>
                 <Text style={[styles.storyText, textStyle]}>
