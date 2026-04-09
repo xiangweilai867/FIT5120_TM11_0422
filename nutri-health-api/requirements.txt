@@ -1,0 +1,26 @@
+# FastAPI and server
+fastapi[standard]==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.11
+
+# File handling
+python-multipart==0.0.12
+pillow==12.2.0
+
+# AI Integration
+# google-generativeai==0.8.3
+google-genai==1.68.0
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utilities
+pydantic==2.12.5
+pydantic-settings==2.13.1
