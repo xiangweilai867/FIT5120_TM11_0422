@@ -67,12 +67,16 @@ export async function getStories(): Promise<Story[]> {
   try {
     // Get valid authentication token
     const token = await getToken();
+    console.log('Got token for stories request:', token ? token.substring(0, 20) + '...' : 'no token');
+    console.log('Backend URL:', BACKEND_URL);
 
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
     try {
+      console.log(`Fetching ${BACKEND_URL}/stories with Bearer token`);
+      
       const response = await fetch(`${BACKEND_URL}/stories`, {
         method: 'GET',
         headers: {
@@ -82,6 +86,9 @@ export async function getStories(): Promise<Story[]> {
       });
 
       clearTimeout(timeoutId);
+      
+      console.log('Stories response status:', response.status);
+      console.log('Stories response headers:', Object.fromEntries(response.headers.entries()));
 
       // Handle 401 - token expired or invalid
       if (response.status === 401) {
@@ -98,6 +105,7 @@ export async function getStories(): Promise<Story[]> {
         
         if (!retryResponse.ok) {
           const errorData = await retryResponse.json().catch(() => ({}));
+          console.error('Retry failed with status:', retryResponse.status, errorData);
           throw new ApiError(
             errorData.detail || 'Authentication failed',
             retryResponse.status,
@@ -111,7 +119,11 @@ export async function getStories(): Promise<Story[]> {
 
       // Handle other non-OK responses
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch((e) => {
+          console.error('Failed to parse error response:', e);
+          return {};
+        });
+        console.error('API Error:', response.status, errorData);
         throw new ApiError(
           errorData.detail || 'Failed to fetch stories',
           response.status,
@@ -121,9 +133,16 @@ export async function getStories(): Promise<Story[]> {
 
       // Parse and return response
       const data: StoriesResponse = await response.json();
+      console.log('Successfully fetched stories:', data.stories.length, 'stories');
       return data.stories;
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
+      console.error('Fetch error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        type: error.type
+      });
       throw error;
     }
   } catch (error: any) {
@@ -136,7 +155,8 @@ export async function getStories(): Promise<Story[]> {
     }
 
     // Handle network errors
-    if (error.message === 'Network request failed') {
+    if (error.message === 'Network request failed' || error.message.includes('Network')) {
+      console.error('Network error detected:', error.message);
       throw new ApiError(
         'Network error. Please check your internet connection!',
         0
@@ -149,6 +169,7 @@ export async function getStories(): Promise<Story[]> {
     }
 
     // Handle unknown errors
+    console.error('Unknown error:', error);
     throw new ApiError(
       'Something went wrong. Please try again!',
       500,
