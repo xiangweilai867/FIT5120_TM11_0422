@@ -1,53 +1,76 @@
-```
-# Dependencies
+# TypeScript/JavaScript build artifacts
+*.js.map
+*.tsbuildinfo
+dist/
+build/
 node_modules/
 
-# Logs and temp files
-*.log
-*.tmp
-
-# Environment
+# Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# Editors
+# IDE specific
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Python
+# Logs
+*.log
+
+# Dependencies cache
+.npm/
+.yarn/
+.pnp.*
+.pnp.js
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Python artifacts (if any Python in project)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-venv/
-.venv/
-.env
-.env.local
-.env.*
-.mypy_cache/
-.pytest_cache/
-.coverage
-coverage/
-htmlcov/
-
-# Build outputs
-dist/
-build/
-target/
-*.out
-*.exe
-*.dll
 *.so
-*.a
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Java/Gradle artifacts
+target/
+.gradle/
+build/
 *.class
+*.jar
+*.war
+*.ear
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# C/C++ artifacts
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.exe
+*.out
+*.app
 
-# Compression
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -66,4 +89,7 @@ Thumbs.db
 *.Z
 *.lz
 *.lzo
-```
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
