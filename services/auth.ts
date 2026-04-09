@@ -29,7 +29,6 @@ interface TokenResponse {
 async function requestNewToken(): Promise<string> {
   console.log(`Requesting new token at ${BACKEND_URL}/token`);
   console.log('Checking credentials:', DEMO_USERNAME, DEMO_PASSWORD);
-
   const formData = new URLSearchParams();
   formData.append('username', DEMO_USERNAME);
   formData.append('password', DEMO_PASSWORD);
