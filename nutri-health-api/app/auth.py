@@ -20,8 +20,10 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", "24"))
 
 # Hardcoded credentials for demo purposes
-DEMO_USERNAME = os.getenv("DEMO_USERNAME")
-DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
+#DEMO_USERNAME = os.getenv("DEMO_USERNAME")
+#DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
+DEMO_USERNAME = os.getenv("DEMO_USERNAME", "demo")
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "demo123")
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
