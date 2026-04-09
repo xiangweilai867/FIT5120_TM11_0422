@@ -1,0 +1,387 @@
+import React from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  Image, 
+  ScrollView,
+  Dimensions,
+  TouchableOpacity
+} from 'react-native';
+import { ArrowRight, ArrowLeft } from 'lucide-react-native';
+import type { Goal } from './types';
+
+const { width } = Dimensions.get('window');
+
+export default function GrowUpDetail({ goal, onBack }: { goal: Goal; onBack?: () => void }) {
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Custom Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <ArrowLeft color="#4CAF50" size={28} />
+        <Text style={styles.backButtonText}>Back to Goals</Text>
+      </TouchableOpacity>
+
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={styles.heroImageContainer}>
+          <Image 
+            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrSM32q7XlPujehh6OBCUPQAxm54TnFOlVSbzvWsgAQtxU0KjG2n5wyUpxc_4EiVW9McN_SUvWo7fgk8Awixd4Pa3jdEu0P8Q8p78PeKWQfha8XySUS0wIWtJoY0QmzMHDRWqRoximNSRa8MU1FTDaC5CUdx0jOUJ054Er76eGsdJN0-JWkgHihX8_2EFJJwNygVT_ZyNmxvi_1ntUT5leg-lVCD4Y9xaNHGfXH1Nuzzzz6aqzUwBC9Mm4r_vONOZSeq1fIQL94nuU' }} 
+            style={styles.heroImage} 
+            resizeMode="contain"
+          />
+          <Text style={styles.heroStar}>★</Text>
+        </View>
+        <View style={styles.heroTextContainer}>
+          <Text style={styles.heroTitle}>Foods for 🌱 {goal.title}</Text>
+          <Text style={styles.heroSubtitle}>{goal.description}</Text>
+        </View>
+        <View style={styles.tipCard}>
+          <Text style={styles.tipText}>{goal.mascotTip}</Text>
+          <View style={styles.tipTriangle} />
+        </View>
+      </View>
+
+      {/* Super Power Foods */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIndicator} />
+          <Text style={styles.sectionTitle}>Super Power Foods</Text>
+        </View>
+
+        <View style={styles.grid}>
+          {goal.superFoods.map((food, i) => (
+            <View key={food.name} style={styles.foodCard}>
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={{ uri: food.image }} 
+                  style={styles.foodImage} 
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.foodInfo}>
+                <View style={styles.foodTitleRow}>
+                  <Text style={styles.foodName}>{food.name}</Text>
+                  <Text style={styles.star}>★★</Text>
+                </View>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Try Less Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIndicator, { backgroundColor: '#FF8A65' }]} />
+          <Text style={[styles.sectionTitle, { color: '#FF8A65' }]}>Try Less</Text>
+        </View>
+
+        <View style={styles.tryLessCard}>
+          <View style={styles.tryLessContent}>
+            {/* Bad Choice */}
+            <View style={styles.choiceColumn}>
+              <View style={styles.badImageContainer}>
+                <Image 
+                  source={{ uri: goal.tryLess.image }} 
+                  style={styles.badImage} 
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.choiceName}>{goal.tryLess.name}</Text>
+            </View>
+
+            {/* Transition */}
+            <View style={styles.transitionColumn}>
+              <Text style={[styles.tipText, { color: '#4CAF50' }]}>{goal.tryLess.alternative.tip}</Text>
+              <ArrowRight color="#4CAF50" size={32} />
+              <Text style={styles.tryThisText}>TRY THIS INSTEAD!</Text>
+            </View>
+
+            {/* Good Choice */}
+            <View style={styles.choiceColumn}>
+              <View style={styles.goodImageContainer}>
+                <Image 
+                  source={{ uri: goal.tryLess.alternative.image }} 
+                  style={styles.goodImage} 
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.goodChoiceName}>{goal.tryLess.alternative.name}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 100,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4CAF50',
+  },
+  heroSection: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  heroImageContainer: {
+    width: 192,
+    height: 192,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroStar: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    fontSize: 40,
+    color: '#4CAF50',
+  },
+  heroTextContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#36392c',
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    fontSize: 20,
+    color: '#4CAF50',
+    fontWeight: '700',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  tipCard: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.05)',
+    maxWidth: 320,
+  },
+  tipText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#36392c',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  tipTriangle: {
+    position: 'absolute',
+    top: -12,
+    left: '50%',
+    marginLeft: -12,
+    width: 24,
+    height: 24,
+    backgroundColor: '#fff',
+    transform: [{ rotate: '45deg' }],
+    borderLeftWidth: 2,
+    borderTopWidth: 2,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  section: {
+    marginBottom: 40,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionIndicator: {
+    width: 6,
+    height: 32,
+    borderRadius: 3,
+    backgroundColor: '#4CAF50',
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#4CAF50',
+  },
+  grid: {
+    gap: 16,
+  },
+  foodCard: {
+    backgroundColor: '#f1f5f9',
+    padding: 20,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#fff',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    marginRight: 20,
+  },
+  foodImage: {
+    width: '100%',
+    height: '100%',
+  },
+  foodInfo: {
+    flex: 1,
+  },
+  foodTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  foodName: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#36392c',
+  },
+  star: {
+    color: '#4CAF50',
+    fontSize: 14,
+  },
+  badge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    color: '#2E7D32',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  tryLessCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  tryLessContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 24,
+  },
+  choiceColumn: {
+    alignItems: 'center',
+  },
+  badImageContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginBottom: 8,
+  },
+  badImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.6,
+  },
+  choiceName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  transitionColumn: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  tipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  tryThisText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#4CAF50',
+    marginTop: 8,
+    letterSpacing: 1,
+  },
+  goodImageContainer: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    marginBottom: 12,
+    borderWidth: 6,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  goodImage: {
+    width: '100%',
+    height: '100%',
+  },
+  goodChoiceName: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#36392c',
+  },
+});
