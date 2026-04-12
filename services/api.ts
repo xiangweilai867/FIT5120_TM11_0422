@@ -7,7 +7,8 @@
 
 import { getToken, clearToken } from './auth';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.192.56.70:8000';
+//const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.192.56.70:8000';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://192.168.100.238:8000';
 
 const API_TIMEOUT = 60000; // 60 seconds
 
@@ -28,7 +29,6 @@ export interface ScanResponse {
   alternatives: Array<{
     name: string;
     description?: string;
-    image_url?: string; // Optional: backend can provide image URL
   }>;
 }
 

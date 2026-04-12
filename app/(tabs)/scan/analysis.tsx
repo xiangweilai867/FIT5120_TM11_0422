@@ -42,144 +42,6 @@ const DEBUG_FORCE_UNABLE_TO_RECOGNISE = false;
 const DEBUG_FORCE_NO_RESULT = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_AVAILABLE = false;
 const DEBUG_FORCE_NO_ALTERNATIVES_RESULT = false;
-/**
- * Get image URL for a food item from a fast, reliable image API
- * Uses Placehold.co with food-specific colors and emojis
- * This ensures instant loading and healthy food themed visuals
- * 
- * @param foodName - Name of the food item
- * @returns Image URL string
- */
-function getImageUrlForFood(foodName: string): string {
-  // Clean and format the food name
-  const cleanName = foodName.toLowerCase().trim();
-  
-  // Use placehold.co - creates custom placeholders with emoji
-  // This is extremely reliable, loads instantly, and always works
-  // We use healthy, vibrant colors that match the health theme
-  const colors = ['4CAF50', '8BC34A', 'CDDC39', 'FFEB3B', 'FFC107', 'FF9800'];
-  const colorIndex = cleanName.length % colors.length;
-  const emoji = getFoodEmoji(foodName);
-  const placeholderUrl = `https://placehold.co/800x600/${colors[colorIndex]}/FFFFFF?text=${encodeURIComponent(emoji + ' ' + foodName)}`;
-  
-  return placeholderUrl;
-}
-
-/**
- * Get food category for potential future API integration
- */
-function getFoodCategory(foodName: string): string {
-  const lowerName = foodName.toLowerCase();
-  
-  const categories: Record<string, string[]> = {
-    'pizza': ['pizza', 'pepperoni', 'margherita'],
-    'burger': ['burger', 'hamburger', 'cheeseburger'],
-    'pasta': ['pasta', 'spaghetti', 'noodles', 'lasagna', 'fettuccine'],
-    'rice': ['rice', 'fried-rice', 'sushi', 'biryani'],
-    'salad': ['salad', 'caesar-salad', 'greek-salad'],
-    'soup': ['soup', 'tomato-soup', 'chicken-soup', 'ramen'],
-    'sandwich': ['sandwich', 'sub', 'wrap', 'panini'],
-    'taco': ['taco', 'burrito', 'quesadilla', 'nachos'],
-    'chicken': ['chicken', 'grilled-chicken', 'fried-chicken'],
-    'fish': ['fish', 'salmon', 'tuna', 'cod'],
-    'steak': ['steak', 'beef', 'meat'],
-    'vegetable': ['vegetable', 'broccoli', 'carrot', 'spinach'],
-    'fruit': ['fruit', 'apple', 'banana', 'orange'],
-    'dessert': ['cake', 'cookie', 'ice-cream', 'pie'],
-    'bread': ['bread', 'toast', 'bagel', 'croissant'],
-  };
-  
-  for (const [category, keywords] of Object.entries(categories)) {
-    if (keywords.some(keyword => lowerName.includes(keyword))) {
-      return category;
-    }
-  }
-  
-  return 'misc';
-}
-
-/**
- * Get a relevant emoji for common food items
- * Used for placeholder images when API fails
- */
-function getFoodEmoji(foodName: string): string {
-  const lowerName = foodName.toLowerCase();
-  
-  const emojiMap: Record<string, string> = {
-    'apple': '🍎',
-    'banana': '🍌',
-    'orange': '🍊',
-    'grape': '🍇',
-    'strawberry': '🍓',
-    'watermelon': '🍉',
-    'rice': '🍚',
-    'bread': '🍞',
-    'croissant': '🥐',
-    'baguette': '🥖',
-    'pancake': '🥞',
-    'waffle': '🧇',
-    'cheese': '🧀',
-    'meat': '🥩',
-    'poultry': '🍗',
-    'bacon': '🥓',
-    'hamburger': '🍔',
-    'fries': '🍟',
-    'pizza': '🍕',
-    'hotdog': '🌭',
-    'sandwich': '🥪',
-    'taco': '🌮',
-    'burrito': '🌯',
-    'salad': '🥗',
-    'soup': '🍲',
-    'noodles': '🍜',
-    'spaghetti': '🍝',
-    'sushi': '🍣',
-    'bento': '🍱',
-    'curry': '🍛',
-    'ramen': '🍜',
-    'steak': '🥩',
-    'chicken': '🍗',
-    'fish': '🐟',
-    'shrimp': '🍤',
-    'egg': '🥚',
-    'avocado': '🥑',
-    'broccoli': '🥦',
-    'carrot': '🥕',
-    'corn': '🌽',
-    'cucumber': '🥒',
-    'tomato': '🍅',
-    'potato': '🥔',
-    'mushroom': '🍄',
-    'pepper': '🫑',
-    'onion': '🧅',
-    'garlic': '🧄',
-    'ice cream': '🍦',
-    'cake': '🍰',
-    'cookie': '🍪',
-    'chocolate': '🍫',
-    'candy': '🍬',
-    'donut': '🍩',
-    'pie': '🥧',
-    'coffee': '☕',
-    'tea': '🍵',
-    'juice': '🧃',
-    'wine': '🍷',
-    'beer': '🍺',
-    'cocktail': '🍹',
-    'milk': '🥛',
-    'smoothie': '🥤',
-  };
-  
-  // Find matching emoji
-  for (const [key, emoji] of Object.entries(emojiMap)) {
-    if (lowerName.includes(key)) {
-      return emoji;
-    }
-  }
-  
-  // Default food emoji
-  return '🍽️';
-}
 
 // Mock data is no longer needed as we fetch from the backend
 // Kept for reference during development if needed
@@ -261,46 +123,14 @@ export default function AnalysisScreen() {
         'UNHEALTHY': 'This snack is tasty, but we can make it more hero-worthy!'
       };
 
-      // Map alternatives from backend with health-focused descriptions
+      // Map alternatives from backend
       const recommendedFoods: RecommendedFood[] = scanResponse.alternatives && scanResponse.alternatives.length > 0
-        ? scanResponse.alternatives.map((alt, index) => {
-            // Generate health-focused description if not provided
-            const healthDescriptions: Record<string, string> = {
-              'default': 'A nutritious and delicious healthier option!',
-              'vegetable': 'Packed with vitamins and fiber for optimal health!',
-              'fruit': "Nature's candy - full of antioxidants and natural sweetness!",
-              'whole grain': 'Rich in fiber and essential nutrients!',
-              'lean protein': 'Builds muscle while keeping you energized!',
-              'salad': 'Fresh, crisp, and loaded with goodness!',
-              'smoothie': 'A refreshing blend of nutrients in every sip!',
-            };
-            
-            let description = alt.description;
-            if (!description) {
-              // Try to match based on food name
-              const lowerName = alt.name.toLowerCase();
-              if (lowerName.includes('salad') || lowerName.includes('vegetable') || lowerName.includes('veggie')) {
-                description = healthDescriptions['vegetable'];
-              } else if (lowerName.includes('fruit') || lowerName.includes('apple') || lowerName.includes('banana')) {
-                description = healthDescriptions['fruit'];
-              } else if (lowerName.includes('brown rice') || lowerName.includes('quinoa') || lowerName.includes('oat') || lowerName.includes('whole')) {
-                description = healthDescriptions['whole grain'];
-              } else if (lowerName.includes('chicken') || lowerName.includes('fish') || lowerName.includes('tofu') || lowerName.includes('bean')) {
-                description = healthDescriptions['lean protein'];
-              } else if (lowerName.includes('smoothie') || lowerName.includes('shake')) {
-                description = healthDescriptions['smoothie'];
-              } else {
-                description = healthDescriptions['default'];
-              }
-            }
-            
-            return {
-              id: `alt-${index}`,
-              name: alt.name,
-              description: description,
-              image: alt.image_url || getImageUrlForFood(alt.name)
-            };
-          })
+        ? scanResponse.alternatives.map((alt, index) => ({
+            id: `alt-${index}`,
+            name: alt.name,
+            description: alt.description || 'A healthier option for you!',
+            image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80'
+          }))
         : [];
 
       const result: AnalysisResult = {
@@ -488,7 +318,8 @@ export default function AnalysisScreen() {
 
       {/* Section 2: Recommended alternatives */}
       <View style={styles.recommendCard}>
-        <Text style={styles.recommendTitle}>A healthier option for you!</Text>
+        <Text style={styles.recommendTitle}>TRY THIS INSTEAD!</Text>
+
         {alternativesUnavailable ? (
           <View style={styles.messageCard}>
             <Text style={styles.messageTitle}>No alternative available at the moment</Text>

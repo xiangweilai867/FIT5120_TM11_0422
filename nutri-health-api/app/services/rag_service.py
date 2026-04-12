@@ -71,56 +71,25 @@ class RAGService:
         return context
 
     def get_alternatives(self, food_name: str, goal: str = "grow tall", k: int = 3) -> List[Dict]:
-        """Get a list of healthy foods that have Wikimedia images (random selection, not based on input food).
-        
-        IMPORTANT: Food names must EXACTLY match the keys in scan.py's wikimedia_food_urls dictionary.
-        Only use lowercase names that are guaranteed to have images.
-        This method IGNORES the vector store and always returns from the whitelist.
-        """
-        # Whitelist of healthy foods with EXACT name matching to wikimedia_food_urls in scan.py
-        # All names must be lowercase to match the mapping dictionary
-        healthy_foods_with_images = [
-            {"name": "apple", "description": "Natural sweetness, rich in vitamins"},
-            {"name": "banana", "description": "Great source of potassium and energy"},
-            {"name": "orange", "description": "Packed with vitamin C for immunity"},
-            {"name": "grape", "description": "Antioxidant-rich and hydrating"},
-            {"name": "strawberry", "description": "Delicious berries full of vitamins"},
-            {"name": "watermelon", "description": "Refreshing and hydrating fruit"},
-            {"name": "broccoli", "description": "Super vegetable with lots of nutrients"},
-            {"name": "carrot", "description": "Great for eyesight and crunchy fun"},
-            {"name": "cucumber", "description": "Cool and refreshing vegetable"},
-            {"name": "tomato", "description": "Juicy and full of lycopene"},
-            {"name": "spinach", "description": "Iron-rich leafy green"},
-            {"name": "lettuce", "description": "Light and crispy salad base"},
-            {"name": "corn", "description": "Sweet kernels with fibre"},
-            {"name": "avocado", "description": "Creamy healthy fats for growing brains"},
-            {"name": "blueberry", "description": "Tiny but mighty antioxidant berries"},
-            {"name": "raspberry", "description": "Tart and sweet nutrient-packed berries"},
-            {"name": "pear", "description": "Sweet and juicy fibre-rich fruit"},
-            {"name": "peach", "description": "Soft and sweet summer fruit"},
-            {"name": "kiwi", "description": "Tropical fruit loaded with vitamin C"},
-            {"name": "mango", "description": "Sweet tropical delight with vitamins"},
-            {"name": "pineapple", "description": "Tangy tropical fruit with enzymes"},
-            {"name": "plum", "description": "Sweet and tart stone fruit"},
-            {"name": "papaya", "description": "Tropical fruit great for digestion"},
-            {"name": "beans", "description": "Protein-packed legumes"},
-            {"name": "salad", "description": "Fresh mixed greens for health"},
-            {"name": "vegetable salad", "description": "Great source of dietary fibre"},
-            {"name": "fruit platter", "description": "Natural sweetness, rich in vitamins"},
-            {"name": "plain yoghurt", "description": "High in calcium and kid-friendly"},
-            {"name": "grilled chicken", "description": "Lean protein for strong muscles"},
-            {"name": "fish", "description": "Omega-3 rich protein for brain health"},
-        ]
-        
-        # Randomly select k items to ensure variety across scans
-        import random
-        if len(healthy_foods_with_images) > k:
-            selected = random.sample(healthy_foods_with_images, k)
-        else:
-            selected = healthy_foods_with_images[:k]
+        """Get a list of healthier alternative foods."""
+        if not self.is_ready:
+            return self._get_fallback_alternatives()
 
-        # Return exactly as defined - names must match wikimedia_food_urls keys (lowercase)
-        return selected
+        query = f"healthy alternative to {food_name} for kids {goal} nutritious"
+        docs = self.vectorstore.similarity_search(query, k=k)
+
+        alternatives = []
+        for doc in docs:
+            name = doc.metadata.get("name", "")
+            if name and name != food_name:
+                alternatives.append(
+                    {
+                        "name": name,
+                        "description": self._extract_description(doc.page_content),
+                    }
+                )
+
+        return alternatives if alternatives else self._get_fallback_alternatives()
 
     def _extract_description(self, text: str) -> str:
         """Extract a short description from recipe text."""
