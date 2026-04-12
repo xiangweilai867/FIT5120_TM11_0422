@@ -255,11 +255,7 @@ export default function StoryReaderScreen() {
             >
               <Text style={styles.navButtonText}>Next</Text>
             </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.factButton} onPress={handleOpenFoodFact}>
-              <Text style={styles.factButtonText}>Let's Explore!</Text>
-            </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
         {currentPage === story.pageCount - 1 && (
