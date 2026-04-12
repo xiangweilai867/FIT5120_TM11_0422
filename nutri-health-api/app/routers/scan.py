@@ -106,41 +106,132 @@ async def scan_food(
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
         rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
-        # Add image URLs for each alternative using Unsplash source for real food images
-        food_keywords = {
-            "apple": "apple", "banana": "banana", "orange": "orange", "grape": "grapes",
-            "strawberry": "strawberry", "watermelon": "watermelon", "rice": "rice",
-            "bread": "bread", "croissant": "croissant", "pancake": "pancake",
-            "cheese": "cheese", "meat": "meat", "chicken": "chicken", "bacon": "bacon",
-            "burger": "burger", "fries": "fries", "pizza": "pizza", "hotdog": "hotdog",
-            "sandwich": "sandwich", "taco": "taco", "burrito": "burrito", "salad": "salad",
-            "soup": "soup", "noodle": "noodle", "pasta": "pasta", "sushi": "sushi",
-            "egg": "egg", "avocado": "avocado", "broccoli": "broccoli", "carrot": "carrot",
-            "corn": "corn", "cucumber": "cucumber", "tomato": "tomato", "potato": "potato",
-            "mushroom": "mushroom", "pepper": "bell pepper", "ice cream": "ice cream",
-            "cake": "cake", "cookie": "cookie", "chocolate": "chocolate", "donut": "donut",
-            "yogurt": "yogurt", "milk": "milk", "smoothie": "smoothie", "juice": "juice",
-            "berries": "berries", "blueberry": "blueberry", "raspberry": "raspberry",
-            "pear": "pear", "peach": "peach", "plum": "plum", "kiwi": "kiwi fruit",
-            "mango": "mango", "pineapple": "pineapple", "papaya": "papaya",
-            "spinach": "spinach", "lettuce": "lettuce", "cabbage": "cabbage",
-            "beans": "beans", "lentils": "lentils", "tofu": "tofu", "fish": "fish",
-            "salmon": "salmon", "shrimp": "shrimp", "oats": "oatmeal", "cereal": "cereal",
-            "nuts": "nuts", "almonds": "almonds", "walnuts": "walnuts",
-            "healthy": "healthy food", "fruit": "fresh fruit", "vegetable": "vegetables"
+        
+        # Mapping of food names to Wikimedia Commons file names
+        wikimedia_food_map = {
+            "apple": "Apple_with_cut.jpg",
+            "banana": "Bananas_single.jpg",
+            "orange": "Orange_blossom_wb.jpg",
+            "grape": "Grapes_-_green_one_layer.jpg",
+            "strawberry": "Strawberry_closeup.jpg",
+            "watermelon": "Watermelon_cross_section.jpg",
+            "rice": "White_rice_grains.jpg",
+            "bread": "Bread_loaf.jpg",
+            "croissant": "Croissant_01.jpg",
+            "pancake": "Pancakes_with_butter_and_syrup.jpg",
+            "cheese": "Cheese_platter.jpg",
+            "meat": "Raw_meat.jpg",
+            "chicken": "Chicken_breast.jpg",
+            "bacon": "Bacon_crispy.jpg",
+            "burger": "Hamburger_cheese.jpg",
+            "fries": "French_fries.jpg",
+            "pizza": "Pizza_margherita.jpg",
+            "hotdog": "Hot_dog.jpg",
+            "sandwich": "Sandwich_variety.jpg",
+            "taco": "Taco_shell.jpg",
+            "burrito": "Burrito.jpg",
+            "salad": "Green_salad.jpg",
+            "soup": "Vegetable_soup.jpg",
+            "noodle": "Noodles.jpg",
+            "pasta": "Pasta_variety.jpg",
+            "sushi": "Sushi_platter.jpg",
+            "egg": "Eggs_white_brown.jpg",
+            "avocado": "Avocado_cut.jpg",
+            "broccoli": "Broccoli_flower.jpg",
+            "carrot": "Carrots_variety.jpg",
+            "corn": "Sweet_corn.jpg",
+            "cucumber": "Cucumber_slices.jpg",
+            "tomato": "Tomato_red.jpg",
+            "potato": "Potatoes_variety.jpg",
+            "mushroom": "Mushroom_variety.jpg",
+            "pepper": "Bell_peppers_colorful.jpg",
+            "ice cream": "Ice_cream_cone.jpg",
+            "cake": "Birthday_cake.jpg",
+            "cookie": "Chocolate_chip_cookies.jpg",
+            "chocolate": "Chocolate_bar.jpg",
+            "donut": "Glazed_donuts.jpg",
+            "yogurt": "Yogurt_with_fruit.jpg",
+            "milk": "Glass_of_milk.jpg",
+            "smoothie": "Fruit_smoothie.jpg",
+            "juice": "Orange_juice_glass.jpg",
+            "berries": "Mixed_berries.jpg",
+            "blueberry": "Blueberries_fresh.jpg",
+            "raspberry": "Raspberries_fresh.jpg",
+            "pear": "Pear_green.jpg",
+            "peach": "Peach_fruit.jpg",
+            "plum": "Plum_fruit.jpg",
+            "kiwi": "Kiwi_fruit_cut.jpg",
+            "mango": "Mango_fruit.jpg",
+            "pineapple": "Pineapple_whole.jpg",
+            "papaya": "Papaya_cut.jpg",
+            "spinach": "Spinach_leaves.jpg",
+            "lettuce": "Lettuce_head.jpg",
+            "cabbage": "Cabbage_green.jpg",
+            "beans": "Green_beans.jpg",
+            "lentils": "Lentils_dried.jpg",
+            "tofu": "Tofu_block.jpg",
+            "fish": "Fresh_fish.jpg",
+            "salmon": "Salmon_fillet.jpg",
+            "shrimp": "Shrimp_cooked.jpg",
+            "oats": "Oatmeal_bowl.jpg",
+            "cereal": "Breakfast_cereal.jpg",
+            "nuts": "Mixed_nuts.jpg",
+            "almonds": "Almonds_raw.jpg",
+            "walnuts": "Walnuts_shelled.jpg",
+            "healthy": "Healthy_food_platter.jpg",
+            "fruit": "Fresh_fruit_bowl.jpg",
+            "vegetable": "Mixed_vegetables.jpg",
+            "platter": "Fruit_platter.jpg",
+            "vegetables": "Vegetable_salad.jpg",
+            "yoghurt": "Plain_yogurt.jpg",
+            "plain": "Plain_yogurt.jpg",
+            "grain": "Whole_grain_bread.jpg",
+            "grilled": "Grilled_chicken.jpg",
+            "fruit platter": "Fruit_platter.jpg",
+            "vegetable salad": "Vegetable_salad.jpg",
+            "plain yoghurt": "Plain_yogurt.jpg",
+            "whole grain": "Whole_grain_bread.jpg",
+            "grilled chicken": "Grilled_chicken.jpg",
         }
+        
+        import hashlib
         
         for i, alt in enumerate(rewritten_alternatives):
             alt_name = alt.get("name", "").lower()
-            # Extract keywords from the alternative name to search for relevant images
-            keyword = "healthy food"  # default
-            for key, value in food_keywords.items():
+            # Extract keywords from the alternative name to find matching Wikimedia image
+            wikimedia_file = None
+            for key, value in wikimedia_food_map.items():
                 if key in alt_name:
-                    keyword = value
+                    wikimedia_file = value
                     break
             
-            # Use Unsplash source API for real food images with random seed to ensure variety
-            alt["image_url"] = f"https://source.unsplash.com/800x600/?{keyword.replace(' ', '%20')}&sig={i}"
+            # Build Wikimedia Commons URL using MediaWiki API for reliable image retrieval
+            if wikimedia_file:
+                # Use MediaWiki API to get the actual image URL
+                api_url = f"https://commons.wikimedia.org/w/api.php?action=query&titles=File:{wikimedia_file}&prop=imageinfo&iiprop=url&format=json"
+                try:
+                    import aiohttp
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(api_url) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                pages = data.get("query", {}).get("pages", {})
+                                for page_id, page_data in pages.items():
+                                    if "imageinfo" in page_data:
+                                        alt["image_url"] = page_data["imageinfo"][0]["url"]
+                                        break
+                except Exception as e:
+                    logger.warning(f"Failed to fetch image URL from Wikimedia API: {e}")
+                    # Fallback to direct URL construction
+                    alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{wikimedia_file[0].lower()}/{wikimedia_file}"
+            else:
+                # Fallback: use a generic healthy food image
+                fallback_files = ["Healthy_food_platter.jpg", "Fresh_fruit_bowl.jpg", "Mixed_vegetables.jpg"]
+                # Use hash of alternative name to pick a consistent fallback
+                hash_idx = int(hashlib.md5(alt_name.encode()).hexdigest(), 16) % len(fallback_files)
+                fallback_file = fallback_files[hash_idx]
+                alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{fallback_file[0].lower()}/{fallback_file}"
+                
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
