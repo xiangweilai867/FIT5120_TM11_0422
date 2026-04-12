@@ -106,20 +106,41 @@ async def scan_food(
         food_name = result.get("food_name", "")
         rag_alternatives = rag_service.get_alternatives(food_name, k=3)
         rewritten_alternatives = await gemini_service.rewrite_alternatives(rag_alternatives)
-        # Add image URLs for each alternative using placehold.co
-        for alt in rewritten_alternatives:
-            alt_name = alt.get("name", "")
-            # Generate a reliable placeholder image URL with emoji and healthy colors
-            colors = ['4CAF50', '8BC34A', 'CDDC39', 'FFC107', 'FF9800']
-            color_index = len(alt_name) % len(colors)
-            # Extract emoji from the name (first character if it's an emoji, otherwise default)
-            emoji = '🍽️'
-            if alt_name:
-                first_char = alt_name[0]
-                # Check if first character is an emoji (common food emojis)
-                if ord(first_char) > 127000 or first_char in '🍎🍌🍊🍇🍓🍉🍚🍞🥐🥖🥞🧇🧀🥩🍗🥓🍔🍟🍕🌭🥪🌮🌯🥗🍲🍜🍝🍣🍱🍛🍤🥚🥑🥦🥕🌽🥒🍅🥔🍄🫑🧅🧄🍦🍰🍪🍫🍬🍩🥧☕🍵🧃🍷🍺🍹🥛🥤':
-                    emoji = first_char
-            alt["image_url"] = f"https://placehold.co/800x600/{colors[color_index]}/FFFFFF?text={emoji}+{alt_name}"
+        # Add image URLs for each alternative using Unsplash source for real food images
+        food_keywords = {
+            "apple": "apple", "banana": "banana", "orange": "orange", "grape": "grapes",
+            "strawberry": "strawberry", "watermelon": "watermelon", "rice": "rice",
+            "bread": "bread", "croissant": "croissant", "pancake": "pancake",
+            "cheese": "cheese", "meat": "meat", "chicken": "chicken", "bacon": "bacon",
+            "burger": "burger", "fries": "fries", "pizza": "pizza", "hotdog": "hotdog",
+            "sandwich": "sandwich", "taco": "taco", "burrito": "burrito", "salad": "salad",
+            "soup": "soup", "noodle": "noodle", "pasta": "pasta", "sushi": "sushi",
+            "egg": "egg", "avocado": "avocado", "broccoli": "broccoli", "carrot": "carrot",
+            "corn": "corn", "cucumber": "cucumber", "tomato": "tomato", "potato": "potato",
+            "mushroom": "mushroom", "pepper": "bell pepper", "ice cream": "ice cream",
+            "cake": "cake", "cookie": "cookie", "chocolate": "chocolate", "donut": "donut",
+            "yogurt": "yogurt", "milk": "milk", "smoothie": "smoothie", "juice": "juice",
+            "berries": "berries", "blueberry": "blueberry", "raspberry": "raspberry",
+            "pear": "pear", "peach": "peach", "plum": "plum", "kiwi": "kiwi fruit",
+            "mango": "mango", "pineapple": "pineapple", "papaya": "papaya",
+            "spinach": "spinach", "lettuce": "lettuce", "cabbage": "cabbage",
+            "beans": "beans", "lentils": "lentils", "tofu": "tofu", "fish": "fish",
+            "salmon": "salmon", "shrimp": "shrimp", "oats": "oatmeal", "cereal": "cereal",
+            "nuts": "nuts", "almonds": "almonds", "walnuts": "walnuts",
+            "healthy": "healthy food", "fruit": "fresh fruit", "vegetable": "vegetables"
+        }
+        
+        for i, alt in enumerate(rewritten_alternatives):
+            alt_name = alt.get("name", "").lower()
+            # Extract keywords from the alternative name to search for relevant images
+            keyword = "healthy food"  # default
+            for key, value in food_keywords.items():
+                if key in alt_name:
+                    keyword = value
+                    break
+            
+            # Use Unsplash source API for real food images with random seed to ensure variety
+            alt["image_url"] = f"https://source.unsplash.com/800x600/?{keyword.replace(' ', '%20')}&sig={i}"
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
