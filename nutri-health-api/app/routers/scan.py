@@ -140,20 +140,24 @@ async def scan_food(
             "fish": "🐟",
         }
         
-        rewritten_alternatives = []
+        # Store the original clean name for image lookup, and create display name with emoji
+        processed_alternatives = []
         for alt in rag_alternatives:
-            alt_name = alt.get("name", "").lower()
+            original_name = alt.get("name", "").lower()  # Keep clean lowercase name for lookup
+            
             # Find matching emoji
             emoji = "🍽️"  # default emoji
             for key, value in emoji_map.items():
-                if key == alt_name or key in alt_name or alt_name in key:
+                if key == original_name or key in original_name or original_name in key:
                     emoji = value
                     break
             
-            # Capitalize name properly
-            display_name = alt.get("name", "").title()
-            rewritten_alternatives.append({
-                "name": f"{emoji} {display_name}",
+            # Create display name with emoji
+            display_name = f"{emoji} {alt.get('name', '').title()}"
+            
+            processed_alternatives.append({
+                "original_name": original_name,  # Store clean name for image lookup
+                "name": display_name,            # Display name with emoji
                 "description": alt.get("description", "A healthy and tasty choice")
             })
         
@@ -193,20 +197,10 @@ async def scan_food(
         
         import hashlib
         
-        for i, alt in enumerate(rewritten_alternatives):
-            alt_name = alt.get("name", "").lower()
-            # Find matching Wikimedia image from the map (exact match or keyword match)
-            wikimedia_file = None
-            
-            # First try exact match
-            if alt_name in wikimedia_food_map:
-                wikimedia_file = wikimedia_food_map[alt_name]
-            else:
-                # Then try keyword match
-                for key, value in wikimedia_food_map.items():
-                    if key in alt_name or alt_name in key:
-                        wikimedia_file = value
-                        break
+        for alt in processed_alternatives:
+            # Use the stored original_name for exact matching
+            image_key = alt.get("original_name", "")
+            wikimedia_file = wikimedia_food_map.get(image_key)
             
             # Build Wikimedia Commons URL using MediaWiki API for reliable image retrieval
             if wikimedia_file:
@@ -228,13 +222,22 @@ async def scan_food(
                                         break
                 except Exception as e:
                     logger.warning(f"Failed to fetch image URL from Wikimedia API: {e}")
-                    # Fallback to direct URL construction
-                    alt["image_url"] = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{wikimedia_file[0].lower()}/{wikimedia_file}"
+                    # Fallback to direct URL construction using Special:FilePath (no hash needed)
+                    alt["image_url"] = f"https://commons.wikimedia.org/wiki/Special:FilePath/{wikimedia_file}"
             else:
                 # This should not happen since we control the whitelist, but just in case
-                logger.warning(f"No image mapping found for: {alt_name}")
+                logger.warning(f"No image mapping found for: {image_key}")
                 alt["image_url"] = None
-                
+        
+        # Remove the internal 'original_name' field before returning
+        rewritten_alternatives = []
+        for alt in processed_alternatives:
+            rewritten_alternatives.append({
+                "name": alt["name"],
+                "description": alt["description"],
+                "image_url": alt.get("image_url")
+            })
+        
         result["alternatives"] = rewritten_alternatives
 
     # Cache the result
