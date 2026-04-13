@@ -318,7 +318,7 @@ export default function AnalysisScreen() {
 
       {/* Section 2: Recommended alternatives */}
       <View style={styles.recommendCard}>
-        <Text style={styles.recommendTitle}>TRY THIS INSTEAD!</Text>
+        <Text style={styles.recommendTitle}>A healthier option for you!</Text>
 
         {alternativesUnavailable ? (
           <View style={styles.messageCard}>
