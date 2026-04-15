@@ -1,18 +1,18 @@
-import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl } from '@/services/stories';
+import { getStoryText, getStoryPageImageUrl, getStoryPageAudioUrl, getAuthHeaders } from '@/services/stories';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Speech from 'expo-speech';
 import { ArrowLeft, Pause, Play } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { Audio } from 'expo-av';
 
 interface StoryPage {
   storyText: string;
@@ -36,8 +36,11 @@ export default function StoryReaderScreen() {
   const [storyTextData, setStoryTextData] = useState<StoryTextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
+  const [audioState, setAudioState] = useState<'playing'| 'idle' | 'error'>('idle');
+
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   const loadStory = async () => {
     setLoading(true);
@@ -64,51 +67,134 @@ export default function StoryReaderScreen() {
     }
   };
 
+  const loadAuthHeaders = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      setAuthHeaders(headers);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const setupAudio = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+    } catch (err) {
+      console.error('Failed to setup audio:', err);
+    }
+  };
+
+  const cleanupAudio = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setAudioState('idle');
+    } catch (err) {
+      console.error('Failed to cleanup audio:', err);
+    }
+  };
+
   useEffect(() => {
     if (storyId) {
       loadStory();
+    }
+    loadAuthHeaders();
+    setupAudio();
+
+    return () => {
+      cleanupAudio();
     }
   }, [storyId]);
 
   useEffect(() => {
     return () => {
-      Speech.stop();
+      // Speech.stop();
     };
   }, []);
 
-  const handleToggleListen = () => {
-    if (!storyTextData) return;
-
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-      return;
-    }
-
-    const pageText = currentPageData.storyText;
-
-    if (!pageText.trim()) {
-      Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
-      return;
-    }
-
+  const playAudioForPage = async (pageNumber: number) => {
     try {
-      Speech.speak(pageText, {
-        language: 'en-US',
-        rate: 0.9,
-        pitch: 1.0,
-        onStart: () => setIsSpeaking(true),
-        onDone: () => setIsSpeaking(false),
-        onStopped: () => setIsSpeaking(false),
-        onError: () => {
-          setIsSpeaking(false);
-          Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
+      // Stop any currently playing audio
+      await cleanupAudio();
+
+      const audioUrl = getStoryPageAudioUrl(storyId, pageNumber);
+      
+      // Create and load the sound
+      const { sound } = await Audio.Sound.createAsync(
+        {
+          uri: audioUrl,
+          headers: authHeaders || undefined,
         },
+        { shouldPlay: true }
+      );
+      if (story?.pageCount && pageNumber + 1 <= story.pageCount) {
+        // Making this request will cause it to exist in the cache.
+        // This will make the playing of the next audio file smoother.
+        await Audio.Sound.createAsync(
+          {
+            uri: getStoryPageAudioUrl(storyId, pageNumber + 1),
+            headers: authHeaders || undefined,
+          },
+          { shouldPlay: false }
+        ).catch((e) => undefined);
+      }
+
+      soundRef.current = sound;
+      setAudioState('playing');
+
+      // Set up callback for when audio finishes
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          handleAudioFinished(pageNumber);
+        }
       });
-    } catch {
-      setIsSpeaking(false);
-      Alert.alert('Audio unavailable', 'Audio is unavailable at the moment.');
+    } catch (err) {
+      console.error('Failed to play audio:', err);
+      setAudioState('error');
     }
+  };
+
+  const handleListenPress = async () => {
+    if (audioState === 'idle' || audioState === 'error') {
+      await playAudioForPage(currentPage + 1);
+    } else if (audioState === 'playing') {
+      await cleanupAudio();
+    }
+  };
+
+  const handleAudioFinished = async (pageNumber: number) => {
+    setAudioState('idle');
+    
+    // Auto-advance to next page if available
+    if (story && pageNumber < story.pageCount) {
+      const nextPage = pageNumber + 1;
+      
+      // Set flag to prevent scroll handler from interfering
+      // isAutoScrolling.current = true;
+      
+      // Auto-scroll to next page
+      // scrollViewRef.current?.scrollTo({
+      //   y: (nextPage - 1) * PAGE_HEIGHT,
+      //   animated: true,
+      // });
+      
+      // Update current page
+      // setCurrentPage(nextPage);
+      
+      // Wait for scroll animation to complete, then play next page
+      // setTimeout(() => {
+      //   isAutoScrolling.current = false;
+      //   playAudioForPage(nextPage);
+      // }, 600);
+    }
+    // If last page, just stay idle
   };
 
   const handleOpenFoodFact = () => {
@@ -133,6 +219,7 @@ export default function StoryReaderScreen() {
     if (!storyTextData) return;
     if (currentPage < storyTextData.pages.length - 1) {
       setCurrentPage(currentPage + 1);
+      cleanupAudio();
     }
   };
 
@@ -184,7 +271,7 @@ export default function StoryReaderScreen() {
     >
       <View style={styles.heroCard}>
         <Image
-          source={{ uri: imageUrl }}
+          source={{ uri: imageUrl, headers: authHeaders || undefined }}
           style={styles.coverImage}
           resizeMode="cover"
         />
@@ -202,15 +289,15 @@ export default function StoryReaderScreen() {
 
           <TouchableOpacity
             style={[styles.listenButton, { backgroundColor: '#E77A1F' }]}
-            onPress={handleToggleListen}
+            onPress={handleListenPress}
           >
-            {isSpeaking ? (
+            {audioState === 'playing' ? (
               <Pause size={18} color="#FFFFFF" />
             ) : (
               <Play size={18} color="#FFFFFF" />
             )}
             <Text style={styles.listenButtonText}>
-              {isSpeaking ? 'Pause' : 'Listen'}
+              {audioState === 'playing' ? 'Pause' : 'Listen'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -231,7 +318,7 @@ export default function StoryReaderScreen() {
           <Text style={styles.pageText}>{currentPageData.storyText}</Text>
 
           <Image
-            source={{ uri: imageUrl }}
+            source={{ uri: imageUrl, headers: authHeaders || undefined }}
             style={styles.pageImage}
             resizeMode="cover"
           />
