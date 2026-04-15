@@ -1,5 +1,5 @@
 import AppHeader from '@/components/app_header';
-import { getStories, getStoryCoverUrl } from '@/services/stories';
+import { getAuthHeaders, getStories, getStoryCoverUrl } from '@/services/stories';
 import { router } from 'expo-router';
 import { BookOpen } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -7,12 +7,12 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -33,9 +33,11 @@ export default function StoriesScreen() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
 
   useEffect(() => {
     loadStories();
+    loadAuthHeaders();
   }, []);
 
   const loadStories = async () => {
@@ -49,6 +51,15 @@ export default function StoriesScreen() {
       setError(err.message || 'Failed to load stories');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAuthHeaders = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      setAuthHeaders(headers);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -70,7 +81,7 @@ export default function StoriesScreen() {
           onPress={() => handleOpenStory(item.id)}
         >
           <Image
-            source={{ uri: getStoryCoverUrl(item.id) }}
+            source={{ uri: getStoryCoverUrl(item.id), headers: authHeaders || undefined }}
             style={styles.cardImage}
             resizeMode="cover"
           />

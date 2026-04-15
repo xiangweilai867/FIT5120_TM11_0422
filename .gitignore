@@ -167,3 +167,18 @@ hs_err_pid*
 
 expo-env.d.ts
 # @end expo-cli
+
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.env
+
+# generated native folders
+/ios
+/android
