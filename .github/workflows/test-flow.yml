@@ -141,13 +141,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: whitebox-artifacts
-          path: tests/reports/artifacts
+          path: .
 
       - name: Download API smoke metrics
         uses: actions/download-artifact@v4
         with:
           name: api-smoke-metrics
-          path: tests/reports/artifacts
+          path: .
 
       - name: Generate markdown report
         env:
