@@ -1,5 +1,5 @@
 """
-RAG Service - recipe retrieval using FAISS vector store.
+RAG Service - CN food catalog retrieval using a FAISS vector store.
 Uses the project-wide embedding model.
 """
 
@@ -70,7 +70,7 @@ class RAGService:
             logger.error("RAG init failed: %s", e, exc_info=True)
 
     def retrieve_context(self, food_name: str, goal: str = "grow tall", k: int = 3) -> str:
-        """Retrieve relevant recipe context for a given food name."""
+        """Retrieve relevant catalog context for a given food name."""
         if not self.is_ready:
             return ""
 
@@ -132,16 +132,20 @@ class RAGService:
     def _docs_to_candidate_facts(self, docs: List[Any]) -> List[Dict[str, Any]]:
         candidates: List[Dict[str, Any]] = []
         for doc in docs:
-            name = (doc.metadata.get("name", "") or "").strip()
+            metadata = doc.metadata or {}
+            name = (metadata.get("name") or metadata.get("descriptor") or "").strip()
             if not name:
                 continue
-            candidates.append(
-                build_candidate_fact(
-                    name=name,
-                    description=self._extract_description(doc.page_content),
-                    source="rag",
-                )
+            description = self._extract_description(doc.page_content, metadata)
+            candidate = build_candidate_fact(
+                name=name,
+                description=description,
+                candidate_category=self._category_from_metadata(name, metadata),
+                source="rag",
             )
+            if metadata.get("cn_code") is not None:
+                candidate["cn_code"] = metadata["cn_code"]
+            candidates.append(candidate)
         return candidates
 
     def _filter_candidates(
@@ -203,8 +207,26 @@ class RAGService:
             if len(selected) >= target_count:
                 return
 
-    def _extract_description(self, text: str) -> str:
-        """Extract a short description from recipe text."""
+    def _extract_description(self, text: str, metadata: Dict[str, Any]) -> str:
+        """Extract a short description from indexed CN food catalog text."""
+        category = (metadata.get("category_description") or "").strip()
+        brand = (metadata.get("brand_name") or "").strip()
+        tags = metadata.get("tags") or []
+        if isinstance(tags, list):
+            tags_text = ", ".join(str(tag).strip() for tag in tags if str(tag).strip())
+        else:
+            tags_text = str(tags).strip()
+
+        parts: List[str] = []
+        if category:
+            parts.append(category)
+        if brand:
+            parts.append(f"brand {brand}")
+        if tags_text:
+            parts.append(f"tags {tags_text}")
+        if parts:
+            return ", ".join(parts)
+
         if "nutrition:" in text.lower():
             idx = text.lower().find("nutrition:")
             end = text.find("\n", idx)
@@ -214,5 +236,25 @@ class RAGService:
             end = text.find("\n", idx)
             return text[idx + 12 : end].strip()[:30]
         return "A healthy and tasty choice"
+
+    def _category_from_metadata(self, name: str, metadata: Dict[str, Any]) -> str:
+        category_description = (metadata.get("category_description") or "").strip().lower()
+        if "beverage" in category_description:
+            return "drink"
+        if "snack" in category_description:
+            return "snack"
+        if "sweet" in category_description or "baked" in category_description:
+            return "dessert"
+        if "fast food" in category_description or "restaurant" in category_description:
+            return "fast_food"
+        if "fruit" in category_description:
+            return "fruit"
+        if "vegetable" in category_description:
+            return "vegetable"
+        if "dairy" in category_description or "egg" in category_description:
+            return "dairy"
+        if "meal" in category_description or "entree" in category_description or "side dish" in category_description:
+            return "meal"
+        return infer_food_category(name)
 
 rag_service = RAGService()

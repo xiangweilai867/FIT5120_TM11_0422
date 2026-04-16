@@ -17,6 +17,7 @@ from app.services.alternative_rules import (
     infer_food_category,
 )
 from app.services.cache import hash_image, get_cached_result, cache_result
+from app.services.health_scoring import apply_database_first_score
 from app.services.rag_service import rag_service
 from app.auth import get_current_user
 
@@ -112,6 +113,19 @@ async def scan_food(
     # Set recognised flag
     result["recognised"] = _is_recognised(result)
     source_category = infer_food_category(result.get("food_name", ""))
+
+    if result["recognised"]:
+        final_score = apply_database_first_score(result, db)
+        result["assessment_score"] = final_score["assessment_score"]
+        result["assessment"] = final_score["assessment"]
+        logger.info(
+            "Final score for %r: %s (source=%s, cn_code=%s, grade=%s)",
+            result.get("food_name"),
+            result["assessment_score"],
+            final_score["score_source"],
+            final_score["matched_cn_code"],
+            final_score["health_grade"],
+        )
 
     # For healthy foods, hide alternatives entirely.
     if result["recognised"] and int(result.get("assessment_score", 3) or 3) >= 3:
