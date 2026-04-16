@@ -169,6 +169,14 @@ jobs:
             tests/reports/artifacts/*.xml
           if-no-files-found: warn
 
+      - name: Display report in job summary
+        if: always()
+        run: |
+          latest_report=$(ls -t tests/reports/history/*.md 2>/dev/null | head -1)
+          if [[ -f "$latest_report" ]]; then
+            cat "$latest_report" >> $GITHUB_STEP_SUMMARY
+          fi
+
   report-full:
     name: Generate Test Report (Push/Manual)
     runs-on: ubuntu-latest
@@ -211,3 +219,11 @@ jobs:
             tests/reports/artifacts/*.json
             tests/reports/artifacts/*.xml
           if-no-files-found: warn
+
+      - name: Display report in job summary
+        if: always()
+        run: |
+          latest_report=$(ls -t tests/reports/history/*.md 2>/dev/null | head -1)
+          if [[ -f "$latest_report" ]]; then
+            cat "$latest_report" >> $GITHUB_STEP_SUMMARY
+          fi
