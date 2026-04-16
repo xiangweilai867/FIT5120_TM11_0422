@@ -1,4 +1,7 @@
 import importlib
+import asyncio
+from jose import jwt as jose_jwt
+import pytest
 
 
 def load_auth_module(monkeypatch):
@@ -33,3 +36,32 @@ def test_create_and_decode_access_token_round_trip(monkeypatch):
     decoded = auth_module.decode_access_token(token)
 
     assert decoded == {"username": "demo"}
+
+
+def test_get_password_hash_and_verify_password(monkeypatch):
+    auth_module = load_auth_module(monkeypatch)
+
+    monkeypatch.setattr(auth_module.pwd_context, "hash", lambda password: f"hashed:{password}")
+    monkeypatch.setattr(auth_module.pwd_context, "verify", lambda plain, hashed: hashed == f"hashed:{plain}")
+
+    hashed = auth_module.get_password_hash("secret-pass")
+
+    assert auth_module.verify_password("secret-pass", hashed) is True
+    assert auth_module.verify_password("wrong-password", hashed) is False
+
+
+def test_decode_access_token_rejects_missing_subject(monkeypatch):
+    auth_module = load_auth_module(monkeypatch)
+
+    token = jose_jwt.encode({"role": "guest"}, auth_module.SECRET_KEY, algorithm=auth_module.ALGORITHM)
+
+    assert auth_module.decode_access_token(token) is None
+
+
+def test_get_current_user_rejects_invalid_token(monkeypatch):
+    auth_module = load_auth_module(monkeypatch)
+
+    with pytest.raises(auth_module.HTTPException) as exc_info:
+        asyncio.run(auth_module.get_current_user(token="not-a-valid-token"))
+
+    assert exc_info.value.status_code == 401
