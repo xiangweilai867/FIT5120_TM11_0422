@@ -30,7 +30,14 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 FOOD_ANALYSIS_PROMPT = """
-Analyze this food image and provide a child-friendly nutritional assessment for children aged 7-12.
+Analyze the image and first decide whether the main subject is clearly an edible food item.
+
+Critical recognition rules:
+- If the main subject is not edible food, set "is_food" to false
+- If the image is a screenshot, UI, phone screen, mouse, keyboard, toy, book, packaging, table object, or other non-food object, set "is_food" to false
+- If the image is too blurry, too small, too far away, heavily blocked, or the main subject is unclear, set "is_food" to false
+- Do not guess a food name when the image does not clearly show food
+- When "is_food" is false, set "food_name" to "__NOT_FOOD__", describe the object in "primary_object", and set "reject_reason" to one of: not_food, screenshot, blurry, unclear, multiple_objects
 
 Tone and style rules:
 - Warm, lively, and encouraging — like a supportive nutritionist friend
@@ -69,9 +76,22 @@ ANALYSIS_RESPONSE_SCHEMA = {
             "type": "number",
             "description": "Confidence level 0-1 about correctly identifying the food item"
         },
+        "is_food": {
+            "type": "boolean",
+            "description": "Whether the image clearly contains an edible food item as the main subject"
+        },
         "food_name": {
             "type": "string",
             "description": "Name of the food item"
+        },
+        "primary_object": {
+            "type": "string",
+            "description": "Main visible object in the image, e.g. 'mouse', 'pizza', 'phone screen'"
+        },
+        "reject_reason": {
+            "type": "string",
+            "enum": ["none", "not_food", "screenshot", "blurry", "unclear", "multiple_objects", "analysis_failed"],
+            "description": "Reason for rejecting the image as a valid food scan"
         },
         "nutritional_info": {
             "type": "object",
@@ -131,7 +151,7 @@ ANALYSIS_RESPONSE_SCHEMA = {
         }
     },
     "required": [
-        "confidence", "food_name", "nutritional_info",
+        "confidence", "is_food", "food_name", "primary_object", "reject_reason", "nutritional_info",
         "assessment_score", "assessment", "alternatives"
     ],
     "additionalProperties": False
@@ -165,7 +185,16 @@ def _unwrap_json_markdown(response_text: str) -> str:
 
 
 def _validate_analysis_core(result: Dict[str, Any]) -> bool:
-    required_fields = ["confidence", "food_name", "nutritional_info", "assessment_score", "assessment"]
+    required_fields = [
+        "confidence",
+        "is_food",
+        "food_name",
+        "primary_object",
+        "reject_reason",
+        "nutritional_info",
+        "assessment_score",
+        "assessment",
+    ]
     return all(field in result for field in required_fields)
 
 
@@ -459,7 +488,10 @@ class GeminiService:
     def _get_fallback_response(self) -> Dict[str, Any]:
         return {
             "confidence": 0,
-            "food_name": "Food Item",
+            "is_food": False,
+            "food_name": "__NOT_FOOD__",
+            "primary_object": "unknown",
+            "reject_reason": "analysis_failed",
             "nutritional_info": {
                 "carbohydrates": {"amount": "0g", "description": "Helps give you energy to play"},
                 "protein": {"amount": "0g", "description": "Helps your muscles grow strong"},
@@ -467,16 +499,7 @@ class GeminiService:
             },
             "assessment_score": 1,
             "assessment": "We're having trouble analysing this food right now. Please try again later, or ask a grown-up to help you learn about this food! 🌟",
-            "alternatives": [
-                {
-                    "name": "🍎 Fresh Fruits",
-                    "description": "Fruits are always a great choice — naturally sweet and full of goodness!"
-                },
-                {
-                    "name": "🥦 Vegetables",
-                    "description": "Colourful veggies help you grow strong and feel great!"
-                }
-            ]
+            "alternatives": []
         }
 
 

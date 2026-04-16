@@ -27,10 +27,66 @@ router = APIRouter(prefix="/scan", tags=["scan"])
 
 MAX_FILE_SIZE = 5 * 1024 * 1024
 ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"]
+MIN_RECOGNITION_CONFIDENCE = 0.75
+SCAN_CACHE_VERSION = "scan-v2-not-food-filter"
+ANALYSIS_FAILED_REASON = "analysis_failed"
+NON_FOOD_REJECT_REASONS = {"not_food", "screenshot", "blurry", "unclear", "multiple_objects"}
+NON_FOOD_TERMS = {
+    "mouse", "keyboard", "phone", "screen", "monitor", "toy", "book", "remote",
+    "controller", "laptop", "tablet", "wall", "chair", "table", "desk", "door",
+    "window", "cable", "charger", "headphone", "earphone", "camera", "bottle cap",
+}
+
+
+def _normalize_label(value: str) -> str:
+    return " ".join((value or "").strip().lower().replace("_", " ").split())
+
+
+def _looks_like_non_food(*labels: str) -> bool:
+    for raw in labels:
+        label = _normalize_label(raw)
+        if not label:
+            continue
+        for bad_term in NON_FOOD_TERMS:
+            if bad_term in label:
+                return True
+    return False
+
+
+def _reject_reason(result: dict) -> str:
+    return _normalize_label(str(result.get("reject_reason", "")))
 
 
 def _is_recognised(result: dict) -> bool:
-    return result.get("confidence", 0) > 0 and result.get("food_name", "").strip().lower() != "food item"
+    food_name = _normalize_label(result.get("food_name", ""))
+    primary_object = _normalize_label(result.get("primary_object", ""))
+    confidence = float(result.get("confidence", 0) or 0)
+    if result.get("is_food") is not True:
+        return False
+    if confidence < MIN_RECOGNITION_CONFIDENCE:
+        return False
+    if food_name in {"", "food item", "__not food__", "__not_food__"}:
+        return False
+    if _reject_reason(result) in NON_FOOD_REJECT_REASONS:
+        return False
+    if _looks_like_non_food(food_name, primary_object):
+        return False
+    return True
+
+
+def _raise_not_food(result: dict) -> None:
+    logger.info(
+        "Rejected non-food scan: food_name=%r primary_object=%r confidence=%.2f reject_reason=%s",
+        result.get("food_name"),
+        result.get("primary_object"),
+        float(result.get("confidence", 0) or 0),
+        _reject_reason(result) or "none",
+    )
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="No food detected. Please retake a photo with one food item clearly visible.",
+        headers={"X-Error-Code": "NOT_FOOD"},
+    )
 
 
 def get_food_image_url(food_name: str) -> str:
@@ -91,7 +147,7 @@ async def scan_food(
         )
 
     # Check cache
-    image_hash = hash_image(file_content)
+    image_hash = hash_image(file_content + SCAN_CACHE_VERSION.encode("utf-8"))
     logger.info(f"Processing image with hash: {image_hash[:16]}...")
     cached_result = get_cached_result(db, image_hash)
     if cached_result:
@@ -110,29 +166,39 @@ async def scan_food(
             headers={"X-Error-Code": "ANALYSIS_FAILED"},
         )
 
-    # Set recognised flag
-    result["recognised"] = _is_recognised(result)
-    source_category = infer_food_category(result.get("food_name", ""))
-
-    if result["recognised"]:
-        final_score = apply_database_first_score(result, db)
-        result["assessment_score"] = final_score["assessment_score"]
-        result["assessment"] = final_score["assessment"]
-        logger.info(
-            "Final score for %r: %s (source=%s, cn_code=%s, grade=%s)",
-            result.get("food_name"),
-            result["assessment_score"],
-            final_score["score_source"],
-            final_score["matched_cn_code"],
-            final_score["health_grade"],
+    if _reject_reason(result) == ANALYSIS_FAILED_REASON:
+        logger.error("Vision analysis returned fallback failure payload")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to analyse image. Please try again later.",
+            headers={"X-Error-Code": "ANALYSIS_FAILED"},
         )
 
+    if not _is_recognised(result):
+        _raise_not_food(result)
+
+    # Set recognised flag
+    result["recognised"] = True
+    source_category = infer_food_category(result.get("food_name", ""))
+
+    final_score = apply_database_first_score(result, db)
+    result["assessment_score"] = final_score["assessment_score"]
+    result["assessment"] = final_score["assessment"]
+    logger.info(
+        "Final score for %r: %s (source=%s, cn_code=%s, grade=%s)",
+        result.get("food_name"),
+        result["assessment_score"],
+        final_score["score_source"],
+        final_score["matched_cn_code"],
+        final_score["health_grade"],
+    )
+
     # For healthy foods, hide alternatives entirely.
-    if result["recognised"] and int(result.get("assessment_score", 3) or 3) >= 3:
+    if int(result.get("assessment_score", 3) or 3) >= 3:
         result["alternatives"] = []
 
     # For moderate/unhealthy recognised foods, build healthier swaps from rules/RAG and then rewrite.
-    elif result["recognised"]:
+    else:
         food_name = result.get("food_name", "")
         candidate_alternatives = rag_service.get_alternatives(
             food_name,
