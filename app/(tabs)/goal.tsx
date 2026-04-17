@@ -34,7 +34,7 @@ import type { Alternative, Goal, SuperFood, TryLess } from '../../components/goa
 export type { Alternative, Goal, SuperFood, TryLess };
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48 - 24) / 2;
+const CARD_WIDTH = (SCREEN_WIDTH - 120) / 2;
 
 const GOALS: Goal[] = [
   {
@@ -280,11 +280,15 @@ export default function GoalScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Shared app header with menu button */}
-      <AppHeader title={selectedGoalId ? selectedGoal.title : 'NutriHeroes'} />
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Shared app header with menu button */}
+        <AppHeader title={selectedGoalId ? selectedGoal?.title : 'NutriHeroes'} />
 
-      {/* Content */}
-      {selectedGoalId ? renderGoalDetail() : renderGoalList()}
+        {/* Content */}
+        {selectedGoalId ? renderGoalDetail() : renderGoalList()}
+
+      </ScrollView>
+      
     </SafeAreaView>
   );
 }
@@ -293,6 +297,13 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F6F8EC',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
+    backgroundColor: '#F8F5E9',
   },
   scrollView: {
     flex: 1,

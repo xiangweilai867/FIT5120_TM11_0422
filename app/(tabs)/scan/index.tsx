@@ -1,8 +1,9 @@
 import AppHeader from '@/components/app_header';
 import { router } from 'expo-router';
-import { Camera, QrCode, Utensils, Zap } from 'lucide-react-native';
-import React from 'react';
+import { Camera, CircleArrowDown, QrCode, Utensils, Zap } from 'lucide-react-native';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
   Image,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,17 @@ export default function ScanScreen() {
   const handleStartScan = () => {
     router.push('/scan/camera');
   };
+
+  const scale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    // Defines a loop: Scale to 1.1, then back to 1
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 400, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -38,7 +50,17 @@ export default function ScanScreen() {
 
         {/* Main card that explains how the scan flow works */}
         <View style={styles.mainCard}>
-          <Text style={styles.sectionTitle}>How to Scan</Text>
+          <Animated.View style={{transform: [{scale}]}}>
+            <TouchableOpacity style={styles.scanButton} onPress={handleStartScan}>
+              <QrCode size={30} color="#FFFFFF" />
+              <Text style={styles.scanButtonText}>START SCANNING</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <View style={styles.instructionText}>
+            <CircleArrowDown size={30} style={{marginRight: 8, marginTop: 2}}/>
+            <Text style={styles.sectionTitle}>How to Scan</Text>
+          </View>
 
           <View style={styles.stepsContainer}>
             <StepCard
@@ -64,12 +86,7 @@ export default function ScanScreen() {
               iconBackground="#F59A9A"
               stepColor="#D64545"
             />
-          </View>
-
-          <TouchableOpacity style={styles.scanButton} onPress={handleStartScan}>
-            <QrCode size={30} color="#FFFFFF" />
-            <Text style={styles.scanButtonText}>START SCANNING</Text>
-          </TouchableOpacity>
+          </View>          
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -153,6 +170,11 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textAlign: 'center',
     color: '#1F1F1F',
+  },
+  instructionText: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
     marginBottom: 28,
   },
   stepsContainer: {
@@ -194,7 +216,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   scanButton: {
-    marginTop: 28,
+    marginBottom: 24,
     backgroundColor: '#B45309',
     borderRadius: 26,
     minHeight: 78,
@@ -210,7 +232,7 @@ const styles = StyleSheet.create({
   },
   scanButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '900',
   },
 });
