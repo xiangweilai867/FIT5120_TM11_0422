@@ -163,6 +163,7 @@ export default function MealMakerScreen() {
       return () => {
         stopMenuMusic();
         stopRoundMusic();
+        resetGame();
       };
     }, [playMenuMusic, stopMenuMusic, stopRoundMusic])
   );
@@ -172,7 +173,7 @@ export default function MealMakerScreen() {
       playRoundMusic();
     } else if (gamePhase === 'idle' || gamePhase === 'game_over') {
       // Stop round → resume menu
-      stopRoundMusic();
+      // stopRoundMusic();
     }
   }, [gamePhase, playRoundMusic, stopRoundMusic, playMenuMusic]);
 
