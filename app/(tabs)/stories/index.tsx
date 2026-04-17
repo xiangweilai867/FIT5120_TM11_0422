@@ -2,10 +2,12 @@ import AppHeader from '@/components/app_header';
 import { getAuthHeaders, getStories, getStoryCoverUrl } from '@/services/stories';
 import { router } from 'expo-router';
 import { BookOpen } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
+  Easing,
   FlatList,
   StyleSheet,
   Text,
@@ -19,6 +21,7 @@ const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.74;
 const CARD_HEIGHT = height * 0.48;
 const CARD_SPACING = (width - CARD_WIDTH) / 2;
+const AUTO_SCROLL_INTERVAL = 5000;
 
 // Local mascot image used for the bottom reading helper area.
 const readingMascot = require('../../../assets/images/nutriheroes_reading.png');
@@ -35,11 +38,23 @@ export default function StoriesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authHeaders, setAuthHeaders] = useState<{ Authorization: string } | null>(null);
+  const flatListRef = useRef<FlatList>(null);
+  const intervalRef = useRef<number | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadStories();
     loadAuthHeaders();
   }, []);
+
+  useEffect(() => {
+    if (stories.length > 0) {
+      startAutoScroll();
+      animateProgress();
+    }
+    return stopAutoScroll;
+  }, [stories]);
 
   const loadStories = async () => {
     try {
@@ -113,6 +128,51 @@ export default function StoriesScreen() {
     );
   };
 
+  const startAutoScroll = () => {
+    stopAutoScroll();
+
+    if (stories.length <= 1) return;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prev) => {
+        const nextIndex = (prev + 1) % stories.length;
+
+        flatListRef.current?.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
+
+        return nextIndex;
+      });
+    }, AUTO_SCROLL_INTERVAL);
+  };
+
+  const stopAutoScroll = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    progress.stopAnimation();
+    progress.setValue(0);
+  };
+
+  const animateProgress = () => {
+    progress.setValue(0);
+
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: AUTO_SCROLL_INTERVAL,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  useEffect(() => {
+    if (stories.length > 0) {
+      animateProgress();
+    }
+  }, [currentIndex]);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -151,29 +211,49 @@ export default function StoriesScreen() {
             <Text style={styles.storyIntroTitle}>Stories</Text>
           </View>
 
-          <Text style={styles.storyIntroSubtitle}>
-            Swipe left or right to choose a story
-          </Text>
         </View>
 
         {/* Fixed-height carousel area keeps the mascot helper stable below */}
         <View style={styles.carouselSection}>
           <FlatList
+            ref={flatListRef}
             data={stories}
             keyExtractor={(item) => item.id}
             renderItem={renderStoryCard}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
+            onTouchStart={stopAutoScroll}
+            onMomentumScrollEnd={() => {
+              startAutoScroll();
+              animateProgress();
+            }}
             decelerationRate="fast"
             contentContainerStyle={styles.listContent}
             snapToInterval={CARD_WIDTH + CARD_SPACING - 40}
             getItemLayout={(_, index) => ({
-              length: (CARD_WIDTH + CARD_SPACING - 4),
-              offset: (CARD_WIDTH + CARD_SPACING - 4) * index,
+              length: (CARD_WIDTH + CARD_SPACING - 40),
+              offset: (CARD_WIDTH + CARD_SPACING - 40) * index,
               index,
             })}
           />
+        </View>
+
+        {/* Carousel auto scroll progress bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  width: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            />
+          </View>
         </View>
 
         {/* Bottom helper area with mascot guidance */}
@@ -185,7 +265,7 @@ export default function StoriesScreen() {
           />
           <View style={styles.mascotBubble}>
             <Text style={styles.mascotText}>
-              Tap a big picture and start your story adventure.
+              Tap a story to start your adventure!
             </Text>
           </View>
         </View>
@@ -298,6 +378,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
+  },
+  progressContainer: {
+    marginTop: 6, // tight under carousel
+    paddingHorizontal: 24,
+    alignItems: 'center'
+  },
+  progressTrack: {
+    width: '50%',
+    height: 4,
+    backgroundColor: '#e5efdc',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#006b1b',
   },
   mascotPanel: {
     flexDirection: 'row',

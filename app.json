@@ -28,7 +28,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/nutriheroes_logo.png"
     },
     "plugins": [
       "expo-router",
