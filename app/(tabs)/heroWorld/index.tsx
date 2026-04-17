@@ -6,6 +6,7 @@ import { Spacing } from "@/constants/spacing";
 import { ChevronRight, Gamepad2 } from "lucide-react-native";
 import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 
 const GAME_ID = 'xx';
@@ -26,7 +27,7 @@ const GAMES: GameTile[] = [
     title: 'Meal Maker',
     emoji: '🍽️',
     description: 'Catch falling ingredients to build healthy meals!',
-    route: '/games/meal-maker',
+    route: '/(tabs)/heroWorld/meal-maker',
     available: true,
   },
   {
@@ -40,6 +41,14 @@ const GAMES: GameTile[] = [
 ];
 
 export default function HeroWorldScreen() {
+  const router = useRouter();
+
+  const handleGamePress = (game: GameTile) => {
+    if (game.available && game.route) {
+      router.push(game.route as any);
+    }
+  };
+
   const renderGameTile = ({ item }: { item: GameTile }) => {
     // const highScore = highScores[item.id] ?? 0;
     const highScore = 0;
@@ -47,7 +56,7 @@ export default function HeroWorldScreen() {
     return (
       <TouchableOpacity
         style={[styles.gameCard, !item.available && styles.cardDisabled]}
-        // onPress={() => handleGamePress(item)}
+        onPress={() => handleGamePress(item)}
         activeOpacity={item.available ? 0.8 : 1}
         disabled={!item.available}
       >
