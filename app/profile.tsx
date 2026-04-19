@@ -325,11 +325,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.md,
-    paddingHorizontal: Spacing.xl,
     paddingTop: Spacing['4xl'],
   },
   emptyEmoji: {

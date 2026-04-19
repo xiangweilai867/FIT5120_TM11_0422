@@ -25,114 +25,6 @@ import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
 import { AvatarId, AVATAR_OPTIONS, createUserProfile, getAvatarEmoji } from '@/services/userProfile';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const AVATAR_ITEM_WIDTH = 120;
-
-// ─── Age Carousel ─────────────────────────────────────────────────────────────
-
-const AGE_MIN = 1;
-const AGE_MAX = 99;
-const AGES = Array.from({ length: AGE_MAX - AGE_MIN + 1 }, (_, i) => i + AGE_MIN);
-const AGE_ITEM_HEIGHT = 52;
-const VISIBLE_ITEMS = 5;
-
-interface AgeCarouselProps {
-  selectedAge: number;
-  onAgeChange: (age: number) => void;
-}
-
-function AgeCarousel({ selectedAge, onAgeChange }: AgeCarouselProps) {
-  const flatListRef = useRef<FlatList>(null);
-
-  const scrollToAge = (age: number) => {
-    const index = age - AGE_MIN;
-    flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-  };
-
-  const handleScrollEnd = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / AGE_ITEM_HEIGHT);
-    const clampedIndex = Math.max(0, Math.min(index, AGES.length - 1));
-    const newAge = AGES[clampedIndex];
-    onAgeChange(newAge);
-  };
-
-  return (
-    <View style={ageStyles.container}>
-      {/* Selection highlight */}
-      <View style={ageStyles.selectionHighlight} pointerEvents="none" />
-
-      <FlatList
-        ref={flatListRef}
-        data={AGES}
-        keyExtractor={(item) => item.toString()}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={AGE_ITEM_HEIGHT}
-        decelerationRate="fast"
-        onMomentumScrollEnd={handleScrollEnd}
-        getItemLayout={(_, index) => ({
-          length: AGE_ITEM_HEIGHT,
-          offset: AGE_ITEM_HEIGHT * index,
-          index,
-        })}
-        initialScrollIndex={selectedAge - AGE_MIN}
-        contentContainerStyle={{
-          paddingVertical: AGE_ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
-        }}
-        renderItem={({ item }) => {
-          const isSelected = item === selectedAge;
-          return (
-            <TouchableOpacity
-              style={ageStyles.ageItem}
-              onPress={() => {
-                onAgeChange(item);
-                scrollToAge(item);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[ageStyles.ageText, isSelected && ageStyles.ageTextSelected]}>
-                {item}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
-  );
-}
-
-const ageStyles = StyleSheet.create({
-  container: {
-    height: AGE_ITEM_HEIGHT * VISIBLE_ITEMS,
-    width: 100,
-    alignSelf: 'center',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  selectionHighlight: {
-    position: 'absolute',
-    top: AGE_ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
-    left: 0,
-    right: 0,
-    height: AGE_ITEM_HEIGHT,
-    backgroundColor: Colors.primary_container,
-    borderRadius: Radius.md,
-    zIndex: 0,
-  },
-  ageItem: {
-    height: AGE_ITEM_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ageText: {
-    ...Typography.titleLarge,
-    color: Colors.on_surface_variant,
-  },
-  ageTextSelected: {
-    color: Colors.primary,
-    fontWeight: '900',
-  },
-});
 
 // ─── Avatar Carousel ──────────────────────────────────────────────────────────
 
@@ -169,10 +61,9 @@ const avatarStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: Spacing.md,
-    paddingHorizontal: Spacing.base,
   },
   avatarItem: {
-    width: AVATAR_ITEM_WIDTH,
+    width: '30%',
     alignItems: 'center',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
@@ -204,6 +95,7 @@ const avatarStyles = StyleSheet.create({
 export default function ProfileCreateScreen() {
   const [username, setUsername] = useState('');
   const [avatarId, setAvatarId] = useState<AvatarId>('apple');
+  const [ageString, setAgeString] = useState('10');
   const [age, setAge] = useState(10);
   const [usernameError, setUsernameError] = useState('');
   const [ageError, setAgeError] = useState('');
@@ -225,6 +117,7 @@ export default function ProfileCreateScreen() {
 
   const handleCreate = async () => {
     const uErr = validateUsername(username);
+    const age = Number.parseInt(ageString);
     const aErr = validateAge(age);
     setUsernameError(uErr);
     setAgeError(aErr);
@@ -287,7 +180,19 @@ export default function ProfileCreateScreen() {
         {/* Age */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Your Age</Text>
-          <AgeCarousel selectedAge={age} onAgeChange={setAge} />
+          <TextInput
+            style={[styles.textInput, ageError ? styles.textInputError : null]}
+            placeholder="Enter your age..."
+            placeholderTextColor={Colors.on_surface_variant}
+            value={ageString}
+            keyboardType='number-pad'
+            onChangeText={(ageString) => {
+              setAgeString(ageString);
+            }}
+            maxLength={2}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
           {!!ageError && <Text style={styles.errorText}>{ageError}</Text>}
         </View>
 

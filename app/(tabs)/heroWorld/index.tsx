@@ -90,7 +90,7 @@ export default function HeroWorldScreen() {
         <View style={styles.bannerContainer}>
           <View style={styles.bannerImageContainer}>
             <Image
-              source={require('../../../assets/images/nutriheroes_logo.png')}
+              source={require('../../../assets/images/nutriheroes_logo_tight.png')}
               style={styles.bannerImage}
               resizeMode='contain'
             />
@@ -101,7 +101,7 @@ export default function HeroWorldScreen() {
         </View>
 
         {/* Daily Challenge */}
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card}>
           <Text style={{
             fontSize: 32,
             padding: Spacing.md,
@@ -115,11 +115,11 @@ export default function HeroWorldScreen() {
             <Text style={styles.cardSubtext}>Small bite, big power!</Text>
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button}>
+            <View style={styles.button}>
               <ChevronRight color={Colors.on_secondary}></ChevronRight>
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Games section */}
         <View>
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerImageContainer: {
-    width: '100%',
+    width: '60%',
   },
   bannerImage: {
     width: '100%',
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     top: -Spacing.md,
     backgroundColor: Colors.inverse_on_surface,
-    borderRadius: 999,
+    borderRadius: Radius.badge,
     borderWidth: Spacing.xs,
     borderColor: Colors.secondary_container,
     paddingHorizontal: Spacing["2xl"],
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: Colors.secondary_dim,
-    borderRadius: 999,
+    borderRadius: Radius.badge,
   },
   sectionHeader: {
     flexDirection: 'row',
