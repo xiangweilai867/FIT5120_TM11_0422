@@ -1,4 +1,5 @@
 import SideMenu from '@/components/side_menu';
+import ProfileButton from '@/components/profile/ProfileButton';
 import { Menu } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -31,8 +32,8 @@ export default function AppHeader({
         {/* Shared page title */}
         <Text style={styles.headerTitle}>{title}</Text>
 
-        {/* Placeholder keeps the title visually centered */}
-        <View style={styles.headerRightPlaceholder} />
+        {/* Profile button — navigates to the profile page */}
+        <ProfileButton />
       </View>
 
       {/* Shared slide-out menu for the main app pages */}

@@ -38,7 +38,6 @@ interface PlateZone {
 
 export default function MealMakerScreen() {
   const router = useRouter();
-  const navigation = useNavigation();
 
   const {
     gamePhase,

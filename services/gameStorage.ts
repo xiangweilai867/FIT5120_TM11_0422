@@ -3,42 +3,33 @@
  *
  * Persists game scores locally using AsyncStorage.
  * No backend required — all data is stored on-device.
+ *
+ * High scores are now stored in the user profile (services/userProfile.ts).
+ * This service delegates high score reads/writes to the profile service,
+ * while keeping the recent scores list in its own AsyncStorage keys for
+ * backward compatibility.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveProfileHighScore, getProfileHighScore } from './userProfile';
 
-const HIGH_SCORE_KEY = (gameId: string) => `game_high_score_${gameId}`;
 const RECENT_SCORES_KEY = (gameId: string) => `game_recent_scores_${gameId}`;
 const MAX_RECENT_SCORES = 10;
 
 /**
  * Get the all-time high score for a game.
- * Returns 0 if no score has been saved yet.
+ * Reads from the user profile. Returns 0 if no score has been saved yet.
  */
 export async function getHighScore(gameId: string): Promise<number> {
-  try {
-    const value = await AsyncStorage.getItem(HIGH_SCORE_KEY(gameId));
-    return value !== null ? parseInt(value, 10) : 0;
-  } catch {
-    return 0;
-  }
+  return getProfileHighScore(gameId);
 }
 
 /**
  * Save a new score if it is higher than the existing high score.
- * Returns true if the new score is a new high score.
+ * Writes to the user profile. Returns true if the new score is a new high score.
  */
 export async function saveHighScore(gameId: string, score: number): Promise<boolean> {
-  try {
-    const current = await getHighScore(gameId);
-    if (score > current) {
-      await AsyncStorage.setItem(HIGH_SCORE_KEY(gameId), score.toString());
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
+  return saveProfileHighScore(gameId, score);
 }
 
 /**
@@ -71,7 +62,7 @@ export async function saveRecentScore(gameId: string, score: number): Promise<vo
 }
 
 /**
- * Save a completed game score: updates high score and appends to recent scores.
+ * Save a completed game score: updates high score in profile and appends to recent scores.
  * Returns true if the score is a new high score.
  */
 export async function saveGameScore(gameId: string, score: number): Promise<boolean> {

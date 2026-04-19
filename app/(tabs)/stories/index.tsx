@@ -1,7 +1,7 @@
 import AppHeader from '@/components/app_header';
 import { getAuthHeaders, getStories, getStoryCoverUrl } from '@/services/stories';
 import { router } from 'expo-router';
-import { BookOpen } from 'lucide-react-native';
+import { BookOpen, NotebookText } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,6 +16,9 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AutoSizeText, ResizeTextMode } from 'react-native-auto-size-text';
+import { Colors } from '@/constants/colors';
+import { Spacing } from '@/constants/spacing';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.74;
@@ -107,19 +110,23 @@ export default function StoriesScreen() {
 
           <View style={styles.cardContent}>
             <View style={styles.titleBubble}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <AutoSizeText
+                style={styles.cardTitle}
+                numberOfLines={2}
+                fontSize={styles.cardTitle.fontSize}
+                mode={ResizeTextMode.max_lines}>
+                  {item.title}
+              </AutoSizeText>
             </View>
 
             <View style={styles.bottomPanel}>
-              <Text style={styles.cardDescription}>
-                A {item.pageCount}-page adventure awaits!
-              </Text>
-
               <TouchableOpacity
                 style={[styles.readButton, { backgroundColor: '#E77A1F' }]}
                 onPress={() => handleOpenStory(item.id)}
               >
                 <Text style={styles.readButtonText}>Read Now</Text>
+                <NotebookText color={styles.pageCountText.color} size={16}></NotebookText>
+                <Text style={styles.pageCountText}>{item.pageCount}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -277,14 +284,14 @@ export default function StoriesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F5E9',
+    backgroundColor: Colors.surface,
   },
   container: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 20,
-    backgroundColor: '#F8F5E9',
+    backgroundColor: Colors.surface,
   },
   storyIntro: {
     marginBottom: 18,
@@ -373,11 +380,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row'
   },
   readButtonText: {
-    color: '#FFFFFF',
+    color: Colors.on_secondary,
     fontSize: 16,
     fontWeight: '900',
+    paddingHorizontal: Spacing.sm
+  },
+  pageCountText: {
+    color: Colors.on_secondary,
+    fontWeight: '600',
+    paddingHorizontal: Spacing.xs
   },
   progressContainer: {
     marginTop: 6, // tight under carousel
@@ -387,13 +402,13 @@ const styles = StyleSheet.create({
   progressTrack: {
     width: '50%',
     height: 4,
-    backgroundColor: '#e5efdc',
+    backgroundColor: Colors.inverse_on_surface,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#006b1b',
+    backgroundColor: Colors.primary_dim,
   },
   mascotPanel: {
     flexDirection: 'row',
