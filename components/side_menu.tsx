@@ -58,7 +58,7 @@ export default function SideMenu({ visible, onClose }: SideMenuProps) {
     }
   }, [overlayAnim, slideAnim, visible]);
 
-  const handleNavigate = (path: '/goal' | '/scan' | '/stories') => {
+  const handleNavigate = (path: '/goal' | '/scan' | '/stories' | '/heroWorld') => {
     // Close the menu first, then navigate after a short delay.
     onClose();
     setTimeout(() => {
@@ -111,6 +111,12 @@ export default function SideMenu({ visible, onClose }: SideMenuProps) {
               icon={<BookOpen size={20} color="#B45309" />}
               label="Stories"
               onPress={() => handleNavigate('/stories')}
+            />
+
+            <MenuItem
+              icon={<Compass size={20} color="#B45309" />}
+              label="Hero World"
+              onPress={() => handleNavigate('/heroWorld')}
             />
           </View>
         </Animated.View>

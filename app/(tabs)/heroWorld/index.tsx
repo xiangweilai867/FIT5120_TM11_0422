@@ -156,26 +156,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerImageContainer: {
-    width: '60%',
+    width: '80%',
   },
   bannerImage: {
+    position: 'relative',
+    top: -Spacing["2xl"],
     width: '100%',
-    borderRadius: Spacing.xl,
   },
   bannerTextContainer: {
     position: 'relative',
-    top: -Spacing.md,
-    backgroundColor: Colors.inverse_on_surface,
+    top: -Spacing["4xl"],
+    backgroundColor: Colors.on_primary,
     borderRadius: Radius.badge,
-    borderWidth: Spacing.xs,
-    borderColor: Colors.secondary_container,
+    borderWidth: Spacing.spacing_1,
+    borderColor: '#E8D7C7',
     paddingHorizontal: Spacing["2xl"],
     paddingVertical: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center'
   },
   bannerText: {
-    color: Colors.on_secondary_container,
+    color: Colors.secondary_dim,
     ...Typography.headlineLarge
   },
   card: {
