@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type AvatarId = 'apple' | 'broccoli' | 'carrot';
+export type AvatarId = 'hero' | 'princess';
 
 export type FoodPreferenceItem =
   | 'fruits'
@@ -158,42 +158,4 @@ export async function addTotalPoints(points: number): Promise<void> {
   if (!profile) return;
   profile.totalPoints = Math.max(0, profile.totalPoints + points);
   await saveUserProfile(profile);
-}
-
-// ─── Avatar Helpers ───────────────────────────────────────────────────────────
-
-export const AVATAR_OPTIONS: AvatarId[] = ['apple', 'broccoli', 'carrot'];
-
-/**
- * Returns the emoji representation for an avatar ID.
- * Used as a placeholder until real avatar images are available.
- */
-export function getAvatarEmoji(avatarId: AvatarId): string {
-  switch (avatarId) {
-    case 'apple':
-      return '🍎';
-    case 'broccoli':
-      return '🥦';
-    case 'carrot':
-      return '🥕';
-    default:
-      return '🍎';
-  }
-}
-
-/**
- * Returns the profile button emoji for an avatar ID.
- * Slightly different from the avatar image — used in the header button.
- */
-export function getAvatarButtonEmoji(avatarId: AvatarId): string {
-  switch (avatarId) {
-    case 'apple':
-      return '🍏';
-    case 'broccoli':
-      return '🌿';
-    case 'carrot':
-      return '🧡';
-    default:
-      return '🍏';
-  }
 }

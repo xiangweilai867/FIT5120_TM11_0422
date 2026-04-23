@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,12 +25,10 @@ import { Spacing } from '@/constants/spacing';
 import { Radius } from '@/constants/radius';
 import {
   AvatarId,
-  AVATAR_OPTIONS,
   BlacklistItem,
   FoodPreferenceItem,
   FoodPreferences,
   createUserProfile,
-  getAvatarEmoji,
 } from '@/services/userProfile';
 import {
   FoodPreferencesSelector,
@@ -51,22 +50,28 @@ interface AvatarCarouselProps {
 function AvatarCarousel({ selectedAvatar, onAvatarChange }: AvatarCarouselProps) {
   return (
     <View style={avatarStyles.container}>
-      {AVATAR_OPTIONS.map((avatarId) => {
-        const isSelected = avatarId === selectedAvatar;
-        return (
-          <TouchableOpacity
-            key={avatarId}
-            style={[avatarStyles.avatarItem, isSelected && avatarStyles.avatarItemSelected]}
-            onPress={() => onAvatarChange(avatarId)}
-            activeOpacity={0.8}
-          >
-            <Text style={avatarStyles.avatarEmoji}>{getAvatarEmoji(avatarId)}</Text>
-            <Text style={[avatarStyles.avatarLabel, isSelected && avatarStyles.avatarLabelSelected]}>
-              {avatarId.charAt(0).toUpperCase() + avatarId.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      <TouchableOpacity
+        style={[avatarStyles.avatarItem, selectedAvatar === 'hero' && avatarStyles.avatarItemSelected]}
+        onPress={() => onAvatarChange('hero')}
+        activeOpacity={0.3}
+      >
+        <Image
+          source={require('../assets/images/avatar/hero-1.png')}
+          resizeMode='contain'
+          style={styles.avatarImage}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[avatarStyles.avatarItem, selectedAvatar === 'princess' && avatarStyles.avatarItemSelected]}
+        onPress={() => onAvatarChange('princess')}
+        activeOpacity={0.3}
+      >
+        <Image
+          source={require('../assets/images/avatar/princess-1.png')}
+          resizeMode='contain'
+          style={styles.avatarImage}
+        />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -78,18 +83,18 @@ const avatarStyles = StyleSheet.create({
     gap: Spacing.md,
   },
   avatarItem: {
-    width: '30%',
+    width: '40%',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md, 
     borderRadius: Radius.card,
     borderWidth: 2,
     borderColor: Colors.outline_variant,
     backgroundColor: Colors.surface_container_lowest,
+    opacity: 0.5
   },
   avatarItemSelected: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary_container,
+    opacity: 1
   },
   avatarEmoji: {
     fontSize: 52,
@@ -109,7 +114,7 @@ const avatarStyles = StyleSheet.create({
 
 export default function ProfileCreateScreen() {
   const [username, setUsername] = useState('');
-  const [avatarId, setAvatarId] = useState<AvatarId>('apple');
+  const [avatarId, setAvatarId] = useState<AvatarId>('hero');
   const [ageString, setAgeString] = useState('10');
   const [usernameError, setUsernameError] = useState('');
   const [ageError, setAgeError] = useState('');
@@ -329,6 +334,10 @@ const styles = StyleSheet.create({
   hintText: {
     ...Typography.labelSmall,
     color: Colors.on_surface_variant,
+  },
+  avatarImage: {
+    width: '100%',
+    height: 150
   },
   preferencesContainer: {
     backgroundColor: Colors.surface_container_low,
