@@ -11,12 +11,39 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type AvatarId = 'apple' | 'broccoli' | 'carrot';
 
+export type FoodPreferenceItem =
+  | 'fruits'
+  | 'vegetables'
+  | 'rice'
+  | 'bread'
+  | 'noodles'
+  | 'chicken'
+  | 'beef'
+  | 'pork'
+  | 'fish'
+  | 'dairy';
+
+export type BlacklistItem =
+  | 'egg'
+  | 'bread'
+  | 'milk'
+  | 'peanut'
+  | 'seafood'
+  | 'nuts';
+
+export interface FoodPreferences {
+  likes: FoodPreferenceItem[];
+  dislikes: FoodPreferenceItem[];
+  blacklist: BlacklistItem[];
+}
+
 export interface UserProfile {
   username: string;
   avatarId: AvatarId;
   age: number;
   highScores: Record<string, number>;
   totalPoints: number;
+  foodPreferences?: FoodPreferences;
 }
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
@@ -56,7 +83,8 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 export async function createUserProfile(
   username: string,
   avatarId: AvatarId,
-  age: number
+  age: number,
+  foodPreferences?: FoodPreferences
 ): Promise<UserProfile> {
   const profile: UserProfile = {
     username,
@@ -64,6 +92,7 @@ export async function createUserProfile(
     age,
     highScores: {},
     totalPoints: 0,
+    foodPreferences,
   };
   await saveUserProfile(profile);
   return profile;
