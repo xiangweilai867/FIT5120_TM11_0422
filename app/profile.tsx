@@ -359,7 +359,16 @@ export default function ProfileScreen() {
 
         {/* Profile Info */}
         <View style={styles.infoSection}>
-          <Text style={styles.infoSectionTitle}>👤 Profile Info</Text>
+          <View style={styles.infoSectionHeader}>
+            <Text style={styles.infoSectionTitle}>👤 Profile Info</Text>
+            <TouchableOpacity
+              style={styles.editInfoButton}
+              onPress={() => router.push('/profile-edit' as any)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.editInfoButtonText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
@@ -489,9 +498,25 @@ const styles = StyleSheet.create({
   infoSection: {
     gap: Spacing.md,
   },
+  infoSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   infoSectionTitle: {
     ...Typography.titleLarge,
     color: Colors.on_surface,
+  },
+  editInfoButton: {
+    backgroundColor: Colors.primary_container,
+    borderRadius: Radius.badge,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+  },
+  editInfoButtonText: {
+    ...Typography.labelMedium,
+    color: Colors.on_primary_container,
+    fontWeight: '700',
   },
   infoCard: {
     backgroundColor: Colors.surface_container_lowest,
