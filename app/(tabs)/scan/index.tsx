@@ -13,9 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ScanScreen() {
+  const insets = useSafeAreaInsets();
   const handleStartScan = () => {
     router.push('/scan/camera');
   };
@@ -32,7 +33,7 @@ export default function ScanScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Shared app header used across main pages */}
         <AppHeader />
@@ -91,7 +92,7 @@ export default function ScanScreen() {
           </View>          
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
