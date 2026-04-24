@@ -13,6 +13,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Animated,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -62,7 +63,7 @@ export default function MealMakerScreen() {
   const [showAbout, setShowAbout] = useState(false);
   const plateWrapperRef = useRef<View>(null);
 
-  // ─── Audio ────────────────────────────────────────────────────────────────
+  // Audio
 
   const menuSoundRef = useRef<Audio.Sound | null>(null);
   const isMenuPlayingRef = useRef(false);
@@ -169,6 +170,17 @@ export default function MealMakerScreen() {
 
   // Render
 
+  const scale = useRef(new Animated.Value(1)).current;
+    useEffect(() => {
+      // Defines a loop: Scale to 1.1, then back to 1
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 400, useNativeDriver: true })
+        ])
+      ).start();
+    }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <View style={styles.container}>
@@ -218,12 +230,14 @@ export default function MealMakerScreen() {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
-                <View style={styles.playIconCircle}>
-                  <Play size={28} color={Colors.secondary_dim} fill={Colors.secondary_dim} />
-                </View>
-                <Text style={styles.startButtonText}>START GAME</Text>
-              </TouchableOpacity>
+              <Animated.View style={{...styles.startButtonContainer, transform: [{scale}], alignItems: 'center'}}>
+                <TouchableOpacity style={styles.startButton} onPress={handleStartGame} activeOpacity={0.85}>
+                  <View style={styles.playIconCircle}>
+                    <Play size={28} color={Colors.secondary_dim} fill={Colors.secondary_dim} />
+                  </View>
+                  <Text style={styles.startButtonText}>START GAME</Text>
+                </TouchableOpacity>
+              </Animated.View>
 
               {/* How to Play button */}
               <TouchableOpacity
@@ -353,17 +367,20 @@ const styles = StyleSheet.create({
     color: '#B5471F',
     textAlign: 'center',
   },
+  startButtonContainer: {
+    alignItems: 'center',
+  },
   startButton: {
     width: '92%',
     maxWidth: 360,
-    height: 96,
+    padding: Spacing.lg,
     borderRadius: 32,
     backgroundColor: Colors.secondary_dim,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.lg,
-    marginTop: Spacing.md,
+    marginVertical: Spacing.md,
     shadowColor: '#7A2204',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.25,

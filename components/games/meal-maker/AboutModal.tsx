@@ -67,8 +67,8 @@ const SCORING_GROUPS = [
     borderColor: '#FF7043',
     rows: [
       { combo: '🍔 + 🍔 + 🍔', label: '3 Junk Foods', pts: -8 },
-      { combo: '🍬 + 🍬 + 🍬', label: '3 Candies', pts: -10 },
       { combo: '🍔 + 🍬 + 🍬', label: 'Junk + 2 Candies', pts: -8 },
+      { combo: '🍬 + 🍬 + 🍬', label: '3 Candies', pts: -10 },
     ],
   },
 ];
