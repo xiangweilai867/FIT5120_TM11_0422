@@ -117,6 +117,7 @@ def mark_seed_initialized(db: Session, seed_key: str, init_value: str = "complet
 def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[str, int]:
     """
     Load generated JSON seed files into remote catalog tables.
+    Uses UPSERT so reseeding is safe and idempotent.
     """
     table_counts: dict[str, int] = {}
 
@@ -132,17 +133,33 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
             if not rows:
                 continue
 
+            # Assume all rows share same schema and 'id' is PK
             columns = list(rows[0].keys())
             _validate_identifiers(table, columns)
+
             columns_sql = ", ".join(columns)
             values_sql = ", ".join(f":{col}" for col in columns)
-            insert_sql = text(f"INSERT INTO {table} ({columns_sql}) VALUES ({values_sql})")
+
+            pk_column = "id"  # static data assumption
+
+            update_assignments = ", ".join(
+                f"{col} = EXCLUDED.{col}" for col in columns if col != pk_column
+            )
+
+            insert_sql = text(
+                f"""
+                INSERT INTO {table} ({columns_sql})
+                VALUES ({values_sql})
+                ON CONFLICT ({pk_column})
+                DO UPDATE SET {update_assignments}
+                """
+            )
 
             for chunk in _chunk_rows(rows):
                 db.execute(insert_sql, chunk)
 
         db.commit()
-        logger.info("Catalog seed completed: %s", table_counts)
+        logger.info("Catalog seed completed (upsert): %s", table_counts)
         return table_counts
 
     except Exception:
