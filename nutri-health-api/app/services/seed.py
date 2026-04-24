@@ -41,6 +41,18 @@ TABLE_TRUNCATE_ORDER = [
     "daily_healthy_challenge",
 ]
 
+TABLE_PK = {
+    "cn_ctgnme": ["food_category_code"],
+    "cn_fdes": ["cn_code"],
+    "cn_food_tags": ["tag_id"],
+    "cn_gpcnme": ["gpc_code"],
+    "cn_nutdes": ["nutrient_code"],
+    "cn_nutval": ["nutrient_code"],
+    "cn_wght": ["cn_code", "sequence_num", "amount", "unit_amount", "type_of_unit", "source_code"],
+    "daily_healthy_challenge": ["id"],
+    "remote_alternative": ["alt_id"],
+}
+
 INIT_STATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS app_init_state (
     init_key TEXT PRIMARY KEY,
@@ -140,17 +152,21 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
             columns_sql = ", ".join(columns)
             values_sql = ", ".join(f":{col}" for col in columns)
 
-            pk_column = "id"  # static data assumption
+            conflict_cols = TABLE_PK.get(table)
+            if not conflict_cols:
+                raise ValueError(f"No conflict key defined for table {table}")
+
+            conflict_target = ", ".join(conflict_cols)
 
             update_assignments = ", ".join(
-                f"{col} = EXCLUDED.{col}" for col in columns if col != pk_column
+                f"{col} = EXCLUDED.{col}" for col in columns if col not in conflict_cols
             )
 
             insert_sql = text(
                 f"""
                 INSERT INTO {table} ({columns_sql})
                 VALUES ({values_sql})
-                ON CONFLICT ({pk_column})
+                ON CONFLICT ({conflict_target})
                 DO UPDATE SET {update_assignments}
                 """
             )
