@@ -171,15 +171,15 @@ export default function MealMakerScreen() {
   // Render
 
   const scale = useRef(new Animated.Value(1)).current;
-    useEffect(() => {
-      // Defines a loop: Scale to 1.1, then back to 1
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1, duration: 400, useNativeDriver: true })
-        ])
-      ).start();
-    }, []);
+  useEffect(() => {
+    // Defines a loop: Scale to 1.1, then back to 1
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.05, duration: 400, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 400, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.root}>
