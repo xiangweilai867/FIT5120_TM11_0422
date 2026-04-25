@@ -48,7 +48,7 @@ TABLE_PK = {
     "cn_gpcnme": ["gpc_code"],
     "cn_nutdes": ["nutrient_code"],
     "cn_nutval": ["cn_code", "nutrient_code", "source_code", "value_type_code", "per_unit"],
-    "cn_wght": ["cn_code", "sequence_num", "amount", "unit_amount", "type_of_unit", "source_code"],
+    "cn_wght": ["cn_code", "sequence_num", "measure_description"],
     "daily_healthy_challenge": ["id"],
     "remote_alternative": ["alt_id"],
 }
