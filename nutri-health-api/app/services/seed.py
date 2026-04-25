@@ -139,6 +139,7 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
                 db.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
 
         for table in TABLE_INSERT_ORDER:
+            logger.info("Seeding table: %s", table)
             rows = _load_seed_table(table)
             table_counts[table] = len(rows)
 
@@ -170,6 +171,8 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
                 DO UPDATE SET {update_assignments}
                 """
             )
+
+            logger.info("Executing command: [%s]", str(insert_sql))
 
             for chunk in _chunk_rows(rows):
                 db.execute(insert_sql, chunk)
