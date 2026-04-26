@@ -36,6 +36,8 @@ target/
 coverage/
 htmlcov/
 .coverage
+android/
+.expo/
 
 # OS generated files
 .DS_Store
