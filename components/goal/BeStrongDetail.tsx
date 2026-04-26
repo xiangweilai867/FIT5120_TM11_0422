@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   View,
   Text,
@@ -8,30 +7,29 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { ArrowRight, Star, ArrowLeft } from 'lucide-react-native';
-import type { Goal } from './types';
+import { ArrowLeft } from 'lucide-react-native';
 import type { RecommendationResponse } from '../../services/recommendations';
 
 const { width } = Dimensions.get('window');
 
 interface Props {
-  goal: Goal;
   onBack?: () => void;
   recommendations?: RecommendationResponse | null;
   recLoading?: boolean;
 }
 
-export default function BeStrongDetail({ goal, onBack, recommendations, recLoading }: Props) {
+export default function BeStrongDetail({ onBack, recommendations, recLoading }: Props) {
   const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
     name: f.name,
     description: `Grade ${f.grade}`,
     image: f.image_url,
-  })) ?? goal.superFoods;
+  })) ?? [];
 
-  const sf0 = displaySuperFoods[0] ?? goal.superFoods[0];
-  const sf1 = displaySuperFoods[1] ?? goal.superFoods[1];
-  const sf2 = displaySuperFoods[2] ?? goal.superFoods[2];
+  const sf0 = displaySuperFoods[0] ?? { name: 'Loading...', description: '', image: '' };
+  const sf1 = displaySuperFoods[1] ?? { name: '', description: '', image: '' };
+  const sf2 = displaySuperFoods[2] ?? { name: '', description: '', image: '' };
 
   const tinyHeroFoods = recommendations?.tiny_hero_foods ?? [];
   const tryLessFoods = recommendations?.try_less_foods ?? [];
@@ -45,15 +43,15 @@ export default function BeStrongDetail({ goal, onBack, recommendations, recLoadi
 
       {/* Hero Section */}
       <View style={styles.heroSection}>
-        <Text style={styles.heroTitle}>Foods for 💪 {goal.title}</Text>
-        <Text style={styles.heroSubtitle}>{goal.description}</Text>
+        <Text style={styles.heroTitle}>Foods for 💪 Be Strong</Text>
+        <Text style={styles.heroSubtitle}>Build muscle power with protein-rich foods</Text>
       </View>
 
-      {/* Good Choice Section */}
+      {/* Super Power Foods */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIndicator} />
-          <Text style={styles.sectionTitle}>Good Choice</Text>
+          <Text style={styles.sectionTitle}>Super Power Foods</Text>
         </View>
 
         {recLoading ? (
@@ -151,18 +149,9 @@ export default function BeStrongDetail({ goal, onBack, recommendations, recLoadi
           </View>
         ) : (
           <View style={styles.tryLessCard}>
-            <View style={styles.tryLessContent}>
-              <View style={styles.choiceRow}>
-                <View style={styles.badImageContainer}>
-                  <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
-                </View>
-                <ArrowRight color="#3b82f6" size={24} />
-                <View style={styles.goodImageContainer}>
-                  <Image source={{ uri: goal.tryLess.alternative.image }} style={styles.goodImage} resizeMode="contain" />
-                </View>
-              </View>
-              <Text style={styles.tipText}>{goal.tryLess.alternative.tip}</Text>
-            </View>
+            <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 16 }}>
+              Check back soon for personalized recommendations!
+            </Text>
           </View>
         )}
       </View>

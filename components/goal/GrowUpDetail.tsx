@@ -10,24 +10,22 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ArrowRight, ArrowLeft } from 'lucide-react-native';
-import type { Goal } from './types';
 import type { RecommendationResponse } from '../../services/recommendations';
 
 const { width } = Dimensions.get('window');
 
 interface Props {
-  goal: Goal;
   onBack?: () => void;
   recommendations?: RecommendationResponse | null;
   recLoading?: boolean;
 }
 
-export default function GrowUpDetail({ goal, onBack, recommendations, recLoading }: Props) {
+export default function GrowUpDetail({ onBack, recommendations, recLoading }: Props) {
   const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
     name: f.name,
     description: `Grade ${f.grade}`,
     image: f.image_url,
-  })) ?? goal.superFoods;
+  })) ?? [];
 
   const tinyHeroFoods = recommendations?.tiny_hero_foods ?? [];
   const tryLessFoods = recommendations?.try_less_foods ?? [];
@@ -50,11 +48,11 @@ export default function GrowUpDetail({ goal, onBack, recommendations, recLoading
           <Text style={styles.heroStar}>★</Text>
         </View>
         <View style={styles.heroTextContainer}>
-          <Text style={styles.heroTitle}>Foods for 🌱 {goal.title}</Text>
-          <Text style={styles.heroSubtitle}>{goal.description}</Text>
+          <Text style={styles.heroTitle}>Foods for 🌱 Grow Up</Text>
+          <Text style={styles.heroSubtitle}>Support healthy growth with nutrient-rich foods</Text>
         </View>
         <View style={styles.tipCard}>
-          <Text style={styles.tipText}>{goal.mascotTip}</Text>
+          <Text style={styles.tipText}>Eat a variety of colorful foods to grow strong!</Text>
           <View style={styles.tipTriangle} />
         </View>
       </View>
@@ -148,25 +146,9 @@ export default function GrowUpDetail({ goal, onBack, recommendations, recLoading
           </View>
         ) : (
           <View style={styles.tryLessCard}>
-            <View style={styles.tryLessContent}>
-              <View style={styles.choiceColumn}>
-                <View style={styles.badImageContainer}>
-                  <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
-                </View>
-                <Text style={styles.choiceName}>{goal.tryLess.name}</Text>
-              </View>
-              <View style={styles.transitionColumn}>
-                <Text style={[styles.tipText, { color: '#4CAF50' }]}>{goal.tryLess.alternative.tip}</Text>
-                <ArrowRight color="#4CAF50" size={32} />
-                <Text style={styles.tryThisText}>TRY THIS INSTEAD!</Text>
-              </View>
-              <View style={styles.choiceColumn}>
-                <View style={styles.goodImageContainer}>
-                  <Image source={{ uri: goal.tryLess.alternative.image }} style={styles.goodImage} resizeMode="contain" />
-                </View>
-                <Text style={styles.goodChoiceName}>{goal.tryLess.alternative.name}</Text>
-              </View>
-            </View>
+            <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 16 }}>
+              Check back soon for personalized recommendations!
+            </Text>
           </View>
         )}
       </View>

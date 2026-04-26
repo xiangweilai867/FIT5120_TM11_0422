@@ -1,8 +1,9 @@
-import React from 'react';
+// Simplified types for goal components - only what's needed for API responses
+// All hardcoded food data has been removed; data now comes from API
 
 export interface Food {
   name: string;
-  description: string;
+  description?: string;
   image: string;
   rating?: number;
 }
@@ -10,28 +11,10 @@ export interface Food {
 // Alias for backward compatibility with existing code using SuperFood
 export type SuperFood = Food;
 
-export interface Alternative {
-  name: string;
-  image: string;
-  tip: string;
-}
-
-export interface TryLess {
-  name: string;
-  image: string;
-  alternative: Alternative;
-}
-
-export interface Goal {
+// Goal metadata interface - only navigation info, no hardcoded food data
+export interface GoalMeta {
   id: string;
   title: string;
   subtitle: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  gradient: string[];
-  tilt: 'left' | 'right';
-  bgIcon: string;
-  description: string;
-  mascotTip: string;
-  superFoods: Food[];
-  tryLess: TryLess;
+  emoji?: string;
 }

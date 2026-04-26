@@ -28,14 +28,14 @@ import FightGermsDetail from '../../components/goal/FightGermsDetail';
 import GrowUpDetail from '../../components/goal/GrowUpDetail';
 import SeeClearDetail from '../../components/goal/SeeClearDetail';
 import ThinkFastDetail from '../../components/goal/ThinkFastDetail';
-import type { Goal } from '../../components/goal/types';
+import type { GoalMeta } from '../../components/goal/types';
 import { getUserProfile } from '../../services/userProfile';
 import { getRecommendations, type RecommendationResponse } from '../../services/recommendations';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = (SCREEN_WIDTH - 48 - 24) / 2; // Two columns with gap and padding
 
 // Goal metadata - only navigation info, no hardcoded food data
-interface GoalMeta {
   id: string;
   title: string;
   subtitle: string;
