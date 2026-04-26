@@ -20,6 +20,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BeStrongDetail from '../../components/goal/BeStrongDetail';
@@ -28,12 +29,9 @@ import FightGermsDetail from '../../components/goal/FightGermsDetail';
 import GrowUpDetail from '../../components/goal/GrowUpDetail';
 import SeeClearDetail from '../../components/goal/SeeClearDetail';
 import ThinkFastDetail from '../../components/goal/ThinkFastDetail';
-import type { Alternative, Goal, SuperFood, TryLess } from '../../components/goal/types';
+import type { Goal } from '../../components/goal/types';
 import { getUserProfile } from '../../services/userProfile';
 import { getRecommendations, type RecommendationResponse } from '../../services/recommendations';
-
-// Re-export types for backward compatibility with imports like `import { Goal } from '../types'`
-export type { Alternative, Goal, SuperFood, TryLess };
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 120) / 2;
