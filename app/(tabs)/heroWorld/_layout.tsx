@@ -12,6 +12,14 @@ export default function HeroWorldLayout() {
           gestureEnabled: false,
         }}
       />
+      <Stack.Screen
+        name="daily-challenge"
+        options={{
+          title: 'Daily Challenge',
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
     </Stack>
   );
 }

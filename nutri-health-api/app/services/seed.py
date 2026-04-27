@@ -41,6 +41,18 @@ TABLE_TRUNCATE_ORDER = [
     "daily_healthy_challenge",
 ]
 
+TABLE_PK = {
+    "cn_ctgnme": ["food_category_code"],
+    "cn_fdes": ["cn_code"],
+    "cn_food_tags": ["tag_id"],
+    "cn_gpcnme": ["gpc_code"],
+    "cn_nutdes": ["nutrient_code"],
+    "cn_nutval": ["cn_code", "nutrient_code", "source_code", "value_type_code", "per_unit"],
+    "cn_wght": ["cn_code", "sequence_num", "measure_description"],
+    "daily_healthy_challenge": ["id"],
+    "remote_alternative": ["alt_id"],
+}
+
 INIT_STATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS app_init_state (
     init_key TEXT PRIMARY KEY,
@@ -117,6 +129,7 @@ def mark_seed_initialized(db: Session, seed_key: str, init_value: str = "complet
 def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[str, int]:
     """
     Load generated JSON seed files into remote catalog tables.
+    Uses UPSERT so reseeding is safe and idempotent.
     """
     table_counts: dict[str, int] = {}
 
@@ -126,23 +139,46 @@ def seed_catalog_tables(db: Session, truncate_before_load: bool = True) -> dict[
                 db.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
 
         for table in TABLE_INSERT_ORDER:
+            logger.info("Seeding table: %s", table)
             rows = _load_seed_table(table)
             table_counts[table] = len(rows)
 
             if not rows:
                 continue
 
+            # Assume all rows share same schema and 'id' is PK
             columns = list(rows[0].keys())
             _validate_identifiers(table, columns)
+
             columns_sql = ", ".join(columns)
             values_sql = ", ".join(f":{col}" for col in columns)
-            insert_sql = text(f"INSERT INTO {table} ({columns_sql}) VALUES ({values_sql})")
+
+            conflict_cols = TABLE_PK.get(table)
+            if not conflict_cols:
+                raise ValueError(f"No conflict key defined for table {table}")
+
+            conflict_target = ", ".join(conflict_cols)
+
+            update_assignments = ", ".join(
+                f"{col} = EXCLUDED.{col}" for col in columns if col not in conflict_cols
+            )
+
+            insert_sql = text(
+                f"""
+                INSERT INTO {table} ({columns_sql})
+                VALUES ({values_sql})
+                ON CONFLICT ({conflict_target})
+                DO UPDATE SET {update_assignments}
+                """
+            )
+
+            logger.info("Executing command: [%s]", str(insert_sql))
 
             for chunk in _chunk_rows(rows):
                 db.execute(insert_sql, chunk)
 
         db.commit()
-        logger.info("Catalog seed completed: %s", table_counts)
+        logger.info("Catalog seed completed (upsert): %s", table_counts)
         return table_counts
 
     except Exception:

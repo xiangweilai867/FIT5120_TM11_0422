@@ -1,19 +1,36 @@
 import React from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  Image, 
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
   ScrollView,
   Dimensions,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { ArrowRight, ArrowLeft } from 'lucide-react-native';
 import type { Goal } from './types';
+import type { RecommendationResponse } from '../../services/recommendations';
 
 const { width } = Dimensions.get('window');
 
-export default function GrowUpDetail({ goal, onBack }: { goal: Goal; onBack?: () => void }) {
+interface Props {
+  goal: Goal;
+  onBack?: () => void;
+  recommendations?: RecommendationResponse | null;
+  recLoading?: boolean;
+}
+
+export default function GrowUpDetail({ goal, onBack, recommendations, recLoading }: Props) {
+  const displaySuperFoods = recommendations?.super_power_foods?.map(f => ({
+    name: f.name,
+    description: `Grade ${f.grade}`,
+    image: f.image_url,
+  })) ?? goal.superFoods;
+
+  const tinyHeroFoods = recommendations?.tiny_hero_foods ?? [];
+  const tryLessFoods = recommendations?.try_less_foods ?? [];
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Custom Back Button */}
@@ -30,15 +47,10 @@ export default function GrowUpDetail({ goal, onBack }: { goal: Goal; onBack?: ()
             style={styles.heroImage} 
             resizeMode="contain"
           />
-          <Text style={styles.heroStar}>★</Text>
         </View>
         <View style={styles.heroTextContainer}>
           <Text style={styles.heroTitle}>Foods for 🌱 {goal.title}</Text>
           <Text style={styles.heroSubtitle}>{goal.description}</Text>
-        </View>
-        <View style={styles.tipCard}>
-          <Text style={styles.tipText}>{goal.mascotTip}</Text>
-          <View style={styles.tipTriangle} />
         </View>
       </View>
 
@@ -49,29 +61,57 @@ export default function GrowUpDetail({ goal, onBack }: { goal: Goal; onBack?: ()
           <Text style={styles.sectionTitle}>Super Power Foods</Text>
         </View>
 
-        <View style={styles.grid}>
-          {goal.superFoods.map((food, i) => (
-            <View key={food.name} style={styles.foodCard}>
-              <View style={styles.imageContainer}>
-                <Image 
-                  source={{ uri: food.image }} 
-                  style={styles.foodImage} 
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={styles.foodInfo}>
-                <View style={styles.foodTitleRow}>
+        {recLoading ? (
+          <ActivityIndicator color="#4CAF50" size="large" style={{ marginVertical: 24 }} />
+        ) : (
+          <View style={styles.grid}>
+            {displaySuperFoods.map((food) => (
+              <View key={food.name} style={styles.foodCard}>
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="contain" />
+                </View>
+                <View style={styles.foodInfo}>
                   <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.star}>★★</Text>
-                </View>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>GOOD CHOICE</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
       </View>
+
+      {/* Tiny Hero Challenge */}
+      {(recLoading || tinyHeroFoods.length > 0) && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIndicator, { backgroundColor: '#9C27B0' }]} />
+            <Text style={[styles.sectionTitle, { color: '#9C27B0' }]}>Tiny Hero Challenge</Text>
+          </View>
+          <Text style={styles.challengeSubtitle}>Try these healthy foods — your taste buds might surprise you!</Text>
+
+          {recLoading ? (
+            <ActivityIndicator color="#9C27B0" size="large" style={{ marginVertical: 24 }} />
+          ) : (
+            <View style={styles.grid}>
+              {tinyHeroFoods.map((food) => (
+                <View key={food.cn_code} style={[styles.foodCard, { borderLeftWidth: 4, borderLeftColor: '#9C27B0' }]}>
+                  <View style={styles.imageContainer}>
+                    <Image source={{ uri: food.image_url }} style={styles.foodImage} resizeMode="contain" />
+                  </View>
+                  <View style={styles.foodInfo}>
+                    <Text style={styles.foodName}>{food.name}</Text>
+                    <View style={[styles.badge, { backgroundColor: '#F3E5F5' }]}>
+                      <Text style={[styles.badgeText, { color: '#7B1FA2' }]}>HERO CHALLENGE</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Try Less Section */}
       <View style={styles.section}>
@@ -80,40 +120,47 @@ export default function GrowUpDetail({ goal, onBack }: { goal: Goal; onBack?: ()
           <Text style={[styles.sectionTitle, { color: '#FF8A65' }]}>Try Less</Text>
         </View>
 
-        <View style={styles.tryLessCard}>
-          <View style={styles.tryLessContent}>
-            {/* Bad Choice */}
-            <View style={styles.choiceColumn}>
-              <View style={styles.badImageContainer}>
-                <Image 
-                  source={{ uri: goal.tryLess.image }} 
-                  style={styles.badImage} 
-                  resizeMode="contain"
-                />
+        {recLoading ? (
+          <ActivityIndicator color="#FF8A65" size="large" style={{ marginVertical: 24 }} />
+        ) : tryLessFoods.length > 0 ? (
+          <View style={styles.grid}>
+            {tryLessFoods.map((food) => (
+              <View key={food.cn_code} style={[styles.foodCard, { backgroundColor: '#FFF3E0' }]}>
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: food.image_url }} style={[styles.foodImage, { opacity: 0.7 }]} resizeMode="contain" />
+                </View>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName}>{food.name}</Text>
+                  <View style={[styles.badge, { backgroundColor: '#FFCCBC' }]}>
+                    <Text style={[styles.badgeText, { color: '#BF360C' }]}>EAT LESS</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.choiceName}>{goal.tryLess.name}</Text>
-            </View>
-
-            {/* Transition */}
-            <View style={styles.transitionColumn}>
-              <Text style={[styles.tipText, { color: '#4CAF50' }]}>{goal.tryLess.alternative.tip}</Text>
-              <ArrowRight color="#4CAF50" size={32} />
-              <Text style={styles.tryThisText}>TRY THIS INSTEAD!</Text>
-            </View>
-
-            {/* Good Choice */}
-            <View style={styles.choiceColumn}>
-              <View style={styles.goodImageContainer}>
-                <Image 
-                  source={{ uri: goal.tryLess.alternative.image }} 
-                  style={styles.goodImage} 
-                  resizeMode="contain"
-                />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.tryLessCard}>
+            <View style={styles.tryLessContent}>
+              <View style={styles.choiceColumn}>
+                <View style={styles.badImageContainer}>
+                  <Image source={{ uri: goal.tryLess.image }} style={styles.badImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.choiceName}>{goal.tryLess.name}</Text>
               </View>
-              <Text style={styles.goodChoiceName}>{goal.tryLess.alternative.name}</Text>
+              <View style={styles.transitionColumn}>
+                <Text style={[styles.tipText, { color: '#4CAF50' }]}>{goal.tryLess.alternative.tip}</Text>
+                <ArrowRight color="#4CAF50" size={32} />
+                <Text style={styles.tryThisText}>TRY THIS INSTEAD!</Text>
+              </View>
+              <View style={styles.choiceColumn}>
+                <View style={styles.goodImageContainer}>
+                  <Image source={{ uri: goal.tryLess.alternative.image }} style={styles.goodImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.goodChoiceName}>{goal.tryLess.alternative.name}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -161,13 +208,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  heroStar: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    fontSize: 40,
-    color: '#4CAF50',
-  },
   heroTextContainer: {
     alignItems: 'center',
     marginBottom: 24,
@@ -184,39 +224,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 8,
     textAlign: 'center',
-  },
-  tipCard: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.05)',
-    maxWidth: 320,
-  },
-  tipText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#36392c',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  tipTriangle: {
-    position: 'absolute',
-    top: -12,
-    left: '50%',
-    marginLeft: -12,
-    width: 24,
-    height: 24,
-    backgroundColor: '#fff',
-    transform: [{ rotate: '45deg' }],
-    borderLeftWidth: 2,
-    borderTopWidth: 2,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   section: {
     marginBottom: 40,
@@ -237,6 +244,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     color: '#4CAF50',
+  },
+  challengeSubtitle: {
+    fontSize: 14,
+    color: '#7B1FA2',
+    fontWeight: '600',
+    marginBottom: 16,
+    fontStyle: 'italic',
   },
   grid: {
     gap: 16,
@@ -270,20 +284,11 @@ const styles = StyleSheet.create({
   foodInfo: {
     flex: 1,
   },
-  foodTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   foodName: {
     fontSize: 20,
     fontWeight: '900',
     color: '#36392c',
-  },
-  star: {
-    color: '#4CAF50',
-    fontSize: 14,
+    marginBottom: 4,
   },
   badge: {
     backgroundColor: '#E8F5E9',

@@ -17,8 +17,12 @@ def daily_challenge_module(monkeypatch):
 
 @pytest.fixture()
 def sqlite_session(daily_challenge_module):
+    # Import after daily_challenge_module sets DATABASE_URL (import chain touches app.database).
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
     engine = create_engine("sqlite:///:memory:")
     daily_challenge_module.DailyHealthyChallenge.__table__.create(bind=engine)
+    UserDailyChallengeCompletion.__table__.create(bind=engine)
     SessionLocal = sessionmaker(bind=engine)
     db = SessionLocal()
     try:
@@ -52,8 +56,11 @@ def sqlite_session(daily_challenge_module):
 
 @pytest.fixture()
 def single_row_session(daily_challenge_module):
+    from app.models.user_daily_challenge import UserDailyChallengeCompletion
+
     engine = create_engine("sqlite:///:memory:")
     daily_challenge_module.DailyHealthyChallenge.__table__.create(bind=engine)
+    UserDailyChallengeCompletion.__table__.create(bind=engine)
     SessionLocal = sessionmaker(bind=engine)
     db = SessionLocal()
     try:
@@ -97,6 +104,7 @@ def test_complete_challenge_returns_feedback(daily_challenge_module, sqlite_sess
     result = asyncio.run(
         daily_challenge_module.complete_challenge(
             payload=daily_challenge_module.DailyChallengeCompleteRequest(id=2),
+            current_user={"username": "testuser", "sub": "testuser"},
             db=sqlite_session,
         )
     )
@@ -111,6 +119,7 @@ def test_complete_challenge_raises_for_missing_id(daily_challenge_module, sqlite
         asyncio.run(
             daily_challenge_module.complete_challenge(
                 payload=daily_challenge_module.DailyChallengeCompleteRequest(id=999),
+                current_user={"username": "testuser", "sub": "testuser"},
                 db=sqlite_session,
             )
         )
